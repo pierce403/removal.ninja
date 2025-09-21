@@ -6,9 +6,9 @@ import DataBrokers from '../DataBrokers';
 
 // Mock Thirdweb hooks
 jest.mock('@thirdweb-dev/react', () => ({
-  ...jest.requireActual('@thirdweb-dev/react'),
-  useAddress: jest.fn(),
+  __esModule: true,
   ThirdwebProvider: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  useAddress: jest.fn(),
 }));
 
 const renderWithProviders = (component: React.ReactElement) => {
@@ -78,7 +78,8 @@ describe('DataBrokers Page', () => {
       expect(screen.getByText('Submit New Data Broker')).toBeInTheDocument();
     });
 
-    const cancelButton = screen.getByText('Cancel');
+    const cancelButtons = screen.getAllByText('Cancel');
+    const cancelButton = cancelButtons[cancelButtons.length - 1];
     fireEvent.click(cancelButton);
 
     await waitFor(() => {
@@ -93,7 +94,7 @@ describe('DataBrokers Page', () => {
     renderWithProviders(<DataBrokers />);
     
     expect(screen.getByText('Total Brokers')).toBeInTheDocument();
-    expect(screen.getByText('Verified')).toBeInTheDocument();
+    expect(screen.getAllByText('Verified').length).toBeGreaterThan(0);
     expect(screen.getByText('RN Reward per Submission')).toBeInTheDocument();
   });
 
@@ -103,7 +104,10 @@ describe('DataBrokers Page', () => {
 
     renderWithProviders(<DataBrokers />);
     
-    expect(screen.getAllByText('Verified')).toHaveLength(2); // Acxiom and LexisNexis
+    const verifiedBadges = screen
+      .getAllByText('Verified')
+      .filter((element: HTMLElement) => element.tagName.toLowerCase() === 'span');
+    expect(verifiedBadges).toHaveLength(2); // Acxiom and LexisNexis
     expect(screen.getByText('Pending')).toBeInTheDocument(); // Spokeo
   });
 });

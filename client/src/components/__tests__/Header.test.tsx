@@ -6,12 +6,12 @@ import Header from '../Header';
 
 // Mock Thirdweb hooks
 jest.mock('@thirdweb-dev/react', () => ({
-  ...jest.requireActual('@thirdweb-dev/react'),
+  __esModule: true,
+  ThirdwebProvider: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   useAddress: jest.fn(),
   useDisconnect: jest.fn(),
   useConnectionStatus: jest.fn(),
   ConnectWallet: jest.fn(() => <button>Connect Wallet</button>),
-  ThirdwebProvider: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 
 const renderWithProviders = (component: React.ReactElement) => {
@@ -64,12 +64,19 @@ describe('Header Component', () => {
   });
 
   test('shows connect wallet button when disconnected', () => {
-    const { useAddress, useConnectionStatus } = require('@thirdweb-dev/react');
+    const { useAddress, useConnectionStatus, ConnectWallet } = require('@thirdweb-dev/react');
     useAddress.mockReturnValue(null);
     useConnectionStatus.mockReturnValue('disconnected');
 
     renderWithProviders(<Header />);
-    
-    expect(screen.getByText('Connect Wallet')).toBeInTheDocument();
+
+    expect(ConnectWallet).toHaveBeenCalled();
+
+    const [props] = ConnectWallet.mock.calls[0];
+    expect(props).toMatchObject({
+      theme: 'light',
+      btnTitle: 'Connect Wallet',
+    });
+    expect(props.className).toContain('!bg-ninja-600');
   });
 });

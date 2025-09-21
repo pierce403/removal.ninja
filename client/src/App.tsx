@@ -1,6 +1,6 @@
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
-import { ThirdwebProvider, metamaskWallet, coinbaseWallet, walletConnect } from '@thirdweb-dev/react';
+import { ThirdwebProvider, metamaskWallet, coinbaseWallet, rainbowWallet, walletConnect } from '@thirdweb-dev/react';
 import { BaseSepoliaTestnet } from '@thirdweb-dev/chains';
 import Header from './components/Header';
 import Home from './pages/Home';
@@ -20,6 +20,7 @@ function App() {
       supportedWallets={[
         metamaskWallet(),
         coinbaseWallet(),
+        rainbowWallet(),
         walletConnect(),
       ]}
     >

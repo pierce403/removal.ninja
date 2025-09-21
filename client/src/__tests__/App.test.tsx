@@ -10,6 +10,7 @@ jest.mock('@thirdweb-dev/react', () => ({
   ),
   metamaskWallet: jest.fn(),
   coinbaseWallet: jest.fn(),
+  rainbowWallet: jest.fn(),
   walletConnect: jest.fn(),
   useAddress: jest.fn(() => null),
   useDisconnect: jest.fn(),
