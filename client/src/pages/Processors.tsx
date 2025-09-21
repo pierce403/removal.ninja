@@ -20,7 +20,7 @@ const Processors: React.FC = () => {
       {/* How It Works */}
       <div className="card">
         <h2 className="text-2xl font-semibold mb-6">How the Processor Network Works</h2>
-        <div className="grid grid-2 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div>
             <h3 className="text-lg font-semibold mb-3 text-ninja-600">🔒 User-Selected Trust</h3>
             <p className="text-gray-600 mb-4">

@@ -25,7 +25,11 @@
     "start": "craco start",
     "build": "craco build",
     "test": "craco test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "build:analyze": "craco build && npx webpack-bundle-analyzer build/static/js/*.js",
+    "build:ci": "CI=true craco build",
+    "lint": "eslint src --ext .ts,.tsx,.js,.jsx --max-warnings 0",
+    "type-check": "tsc --noEmit"
   },
   "eslintConfig": {
     "extends": [

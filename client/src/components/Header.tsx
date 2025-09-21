@@ -1,11 +1,10 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { useAddress, useDisconnect, useConnectionStatus, ConnectWallet } from '@thirdweb-dev/react';
+import { useAddress, useDisconnect, ConnectWallet } from '@thirdweb-dev/react';
 
 const Header: React.FC = () => {
   const address = useAddress();
   const disconnect = useDisconnect();
-  const connectionStatus = useConnectionStatus();
 
   const formatAddress = (address: string): string => {
     if (!address) return '';

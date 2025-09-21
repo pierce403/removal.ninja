@@ -59,17 +59,6 @@
     @apply max-w-6xl mx-auto px-5;
   }
   
-  .grid {
-    @apply grid gap-6;
-  }
-  
-  .grid-2 {
-    @apply grid-cols-1 md:grid-cols-2;
-  }
-  
-  .grid-3 {
-    @apply grid-cols-1 md:grid-cols-2 lg:grid-cols-3;
-  }
   
   .loading {
     @apply inline-block w-5 h-5 border-2 border-gray-200 border-t-ninja-600 rounded-full animate-spin;
