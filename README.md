@@ -1,13 +1,47 @@
 # 🥷 removal.ninja
 
-A decentralized data broker removal tool with token incentives. Help protect privacy while earning rewards through our blockchain-based ecosystem.
+A decentralized data broker removal protocol with token incentives and zkEmail verification. Help protect privacy while earning rewards through our blockchain-based ecosystem.
 
 ## Overview
 
-removal.ninja is a decentralized platform that incentivizes:
-- **Data Broker Discovery**: Users earn 100 RN tokens for submitting new data brokers
-- **Removal Processing**: Trusted processors earn 50 RN tokens for each completed removal
-- **User Privacy Protection**: Users stake tokens to get comprehensive data removal services
+removal.ninja is a decentralized platform that creates a comprehensive data broker removal ecosystem through:
+- **Data Broker Discovery**: Community-sourced database of data brokers with verified opt-out flows
+- **Trusted Processor Network**: Vetted entities that handle sensitive removal requests with staked collateral
+- **User-Selected Privacy**: Users choose which processors they trust with their personal information
+- **Incentivized Participation**: Token rewards for contributing to the privacy protection ecosystem
+- **Cryptographic Verification**: zkEmail proofs for verified removal completion
+
+## Protocol Design
+
+### 🔄 Removal Flow Architecture
+
+**1. Data Broker Registry**
+- Community members discover and submit new data brokers with their opt-out procedures
+- Each submission includes website, removal instructions, and email verification endpoints
+- Verified submissions earn contributors 100 RN tokens
+
+**2. Trusted Processor Network**
+- Processors stake significant collateral (1,000+ RN tokens) that can be slashed for poor performance
+- Users select which processors they trust with their sensitive personal information
+- Creates a competitive marketplace of privacy service providers
+
+**3. User Privacy Journey**
+- Users stake tokens (minimum 10 RN) to join the removal list
+- During onboarding, users select their preferred trusted processors
+- Users never need to share personal information on-chain
+- Sensitive data is only shared with user-selected processors off-chain
+
+**4. zkEmail Verification**
+- Removal requests typically end with email confirmations from data brokers
+- Processors use zkEmail proofs to cryptographically verify removal completions
+- Provides trustless verification without revealing email contents
+- Ensures processors are paid only for verified successful removals
+
+**5. Incentive Alignment**
+- Data broker submissions: **100 RN tokens**
+- Successful removal processing: **50 RN tokens per removal**
+- Processor slashing for non-performance protects user interests
+- Token staking ensures skin-in-the-game for all participants
 
 ## Key Features
 
@@ -31,13 +65,59 @@ removal.ninja is a decentralized platform that incentivizes:
 - Staking mechanisms with slashing protection
 - Automated reward distribution
 
+## Tech Stack
+
+### 🔗 Blockchain Layer
+- **Smart Contracts**: Solidity with OpenZeppelin libraries
+- **Development Framework**: Hardhat for compilation, testing, and deployment
+- **Token Standard**: ERC-20 for RN (RemovalNinja) tokens
+- **Network**: Ethereum-compatible (supports mainnet, testnets, and local development)
+
+### ⚡ Backend Infrastructure
+- **Runtime**: Node.js with Express.js framework
+- **Blockchain Integration**: ethers.js for smart contract interactions
+- **Security**: Helmet for HTTP security, express-rate-limit for API protection
+- **Development**: Nodemon for hot-reloading, concurrently for multi-process management
+
+### 🎨 Frontend
+- **Framework**: React.js with modern hooks
+- **Web3 Integration**: MetaMask wallet connection
+- **Styling**: Custom CSS with responsive design
+- **State Management**: React hooks for local state, context for global state
+
+### 🔐 Cryptographic Components
+- **zkEmail**: Zero-knowledge email verification (planned integration)
+- **Wallet Integration**: MetaMask and other Web3 wallets
+- **Digital Signatures**: Ethereum-standard message signing
+
+### 🛠 Development Tools
+- **Testing**: Jest for unit tests, Hardhat for smart contract testing
+- **Linting**: ESLint for code quality
+- **Package Management**: npm with lock files for reproducible builds
+- **Version Control**: Git with GitHub workflows
+
+### 📦 Deployment
+- **Frontend**: GitHub Pages (static hosting)
+- **Backend**: Node.js compatible platforms
+- **Smart Contracts**: Deployable to any Ethereum-compatible network
+- **Local Development**: Hardhat local network with hot-reloading
+
 ## Architecture
 
 ```
-├── contracts/          # Smart contracts (Solidity)
-├── server/             # Backend API (Node.js/Express)
-├── client/             # Frontend (React)
-└── docs/               # Documentation
+├── contracts/          # Solidity smart contracts with Hardhat framework
+│   ├── contracts/      # RemovalNinja.sol main contract
+│   ├── scripts/        # Deployment and interaction scripts
+│   └── test/          # Smart contract test suites
+├── server/             # Node.js/Express backend API
+│   ├── routes/        # API endpoint handlers
+│   ├── mock-data/     # Development mock data
+│   └── index.js       # Main server entry point
+├── client/             # React.js frontend application
+│   ├── src/           # React components and pages
+│   ├── public/        # Static assets
+│   └── package.json   # Frontend dependencies
+└── scripts/           # Development and setup utilities
 ```
 
 ## Quick Start
@@ -160,7 +240,7 @@ npm run dev
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
 
 ## Security
 
