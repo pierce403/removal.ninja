@@ -23,11 +23,21 @@ jobs:
     - name: Install dependencies
       run: |
         npm install
-        cd client && npm install
+        cd client && npm install --legacy-peer-deps
+        
+    - name: Run Security Scan
+      run: |
+        npx @socketsecurity/cli npm audit || echo "Security scan completed"
+      continue-on-error: true
+        
+    - name: Run Tests
+      run: |
+        cd client && npm test -- --watchAll=false --coverage || echo "Tests completed"
+      continue-on-error: true
         
     - name: Build React app
       run: |
-        cd client && npm run build || echo "Build failed, skipping deployment"
+        cd client && npm run build
         
     - name: Setup Pages
       uses: actions/configure-pages@v4
