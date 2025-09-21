@@ -1,5 +1,7 @@
 const express = require('express');
 const { ethers } = require('ethers');
+const fs = require('fs');
+const path = require('path');
 const router = express.Router();
 
 // Import contract ABI and address
@@ -13,9 +15,24 @@ try {
 
 let contractAddress;
 try {
-  contractAddress = require('../contract-address.json').contractAddress;
+  const contractInfo = require('../contract-address.json');
+  contractAddress = contractInfo.contractAddress;
 } catch (error) {
   console.warn('Contract address not found. Deploy contracts first.');
+}
+
+// Check if we're in mock mode
+const MOCK_MODE = process.env.MOCK_MODE === 'true';
+
+// Load mock data
+let mockBrokers = [];
+if (MOCK_MODE) {
+  try {
+    const mockBrokersPath = path.join(__dirname, '../mock-data/brokers.json');
+    mockBrokers = JSON.parse(fs.readFileSync(mockBrokersPath, 'utf8'));
+  } catch (error) {
+    console.warn('Mock brokers data not found');
+  }
 }
 
 // Provider setup
@@ -26,13 +43,25 @@ router.get('/contract-info', (req, res) => {
   res.json({
     contractAddress,
     rpcUrl: process.env.RPC_URL || 'http://localhost:8545',
-    hasContract: !!contractAddress
+    hasContract: !!contractAddress,
+    mockMode: MOCK_MODE
   });
 });
 
 // Get token balance for address
 router.get('/balance/:address', async (req, res) => {
   try {
+    if (MOCK_MODE) {
+      // Return mock balance
+      res.json({
+        address: req.params.address,
+        balance: '1000.0',
+        balanceWei: ethers.parseEther('1000').toString(),
+        mock: true
+      });
+      return;
+    }
+
     if (!contractAddress) {
       return res.status(400).json({ error: 'Contract not deployed' });
     }
@@ -54,6 +83,17 @@ router.get('/balance/:address', async (req, res) => {
 // Get contract stats
 router.get('/stats', async (req, res) => {
   try {
+    if (MOCK_MODE) {
+      res.json({
+        totalSupply: '1000000.0',
+        totalBrokers: mockBrokers.length.toString(),
+        totalRequests: '0',
+        contractAddress,
+        mock: true
+      });
+      return;
+    }
+
     if (!contractAddress) {
       return res.status(400).json({ error: 'Contract not deployed' });
     }
@@ -79,6 +119,11 @@ router.get('/stats', async (req, res) => {
 // Get all data brokers
 router.get('/brokers', async (req, res) => {
   try {
+    if (MOCK_MODE) {
+      res.json(mockBrokers);
+      return;
+    }
+
     if (!contractAddress) {
       return res.status(400).json({ error: 'Contract not deployed' });
     }
@@ -110,6 +155,20 @@ router.get('/brokers', async (req, res) => {
 // Get processor info
 router.get('/processor/:address', async (req, res) => {
   try {
+    if (MOCK_MODE) {
+      res.json({
+        address: req.params.address,
+        stakedAmount: '0',
+        active: false,
+        completedRequests: '0',
+        slashedAmount: '0',
+        description: '',
+        isProcessor: false,
+        mock: true
+      });
+      return;
+    }
+
     if (!contractAddress) {
       return res.status(400).json({ error: 'Contract not deployed' });
     }
@@ -140,6 +199,17 @@ router.get('/processor/:address', async (req, res) => {
 // Get user info
 router.get('/user/:address', async (req, res) => {
   try {
+    if (MOCK_MODE) {
+      res.json({
+        address: req.params.address,
+        stakedAmount: '0',
+        onRemovalList: false,
+        selectedProcessors: [],
+        mock: true
+      });
+      return;
+    }
+
     if (!contractAddress) {
       return res.status(400).json({ error: 'Contract not deployed' });
     }
