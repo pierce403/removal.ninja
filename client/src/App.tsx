@@ -1,6 +1,6 @@
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
-import { WalletProvider } from './hooks/useWallet';
+import { ThirdwebProvider, metamaskWallet, coinbaseWallet, walletConnect } from '@thirdweb-dev/react';
 import Header from './components/Header';
 import Home from './pages/Home';
 import DataBrokers from './pages/DataBrokers';
@@ -8,12 +8,23 @@ import Processors from './pages/Processors';
 import UserDashboard from './pages/UserDashboard';
 import ProcessorDashboard from './pages/ProcessorDashboard';
 
+// Ethereum Mainnet chainId (you can change this for testnets)
+const CHAIN_ID = process.env.NODE_ENV === 'development' ? 'localhost' : 'ethereum';
+
 function App() {
   return (
-    <WalletProvider>
-      <div className="App">
+    <ThirdwebProvider
+      activeChain={CHAIN_ID}
+      clientId={process.env.REACT_APP_THIRDWEB_CLIENT_ID}
+      supportedWallets={[
+        metamaskWallet(),
+        coinbaseWallet(),
+        walletConnect(),
+      ]}
+    >
+      <div className="min-h-screen bg-gray-50">
         <Header />
-        <main className="container">
+        <main className="container py-8">
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/brokers" element={<DataBrokers />} />
@@ -23,7 +34,7 @@ function App() {
           </Routes>
         </main>
       </div>
-    </WalletProvider>
+    </ThirdwebProvider>
   );
 }
 
