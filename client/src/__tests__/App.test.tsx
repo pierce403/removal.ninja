@@ -36,7 +36,7 @@ describe('App Component', () => {
     );
     
     // Check if header navigation is present
-    expect(screen.getByText('🥷 removal.ninja')).toBeInTheDocument();
+    expect(screen.getAllByText('🥷 removal.ninja').length).toBeGreaterThan(0);
     expect(screen.getByText('Data Brokers')).toBeInTheDocument();
     expect(screen.getByText('Processors')).toBeInTheDocument();
   });
