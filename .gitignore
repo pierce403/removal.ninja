@@ -7,10 +7,18 @@ build/
 .DS_Store
 client/build/
 client/node_modules/
-contracts/artifacts/
-contracts/cache/
-contracts/node_modules/
 .vscode/
 .idea/
 tmp/
 uploads/
+
+# Foundry artifacts
+foundry/out/
+foundry/cache/
+foundry/broadcast/
+foundry/.env
+
+# Deployment keys and sensitive files
+deploy.key
+contracts.txt
+deployment-*.json
