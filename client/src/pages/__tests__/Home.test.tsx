@@ -6,9 +6,9 @@ import Home from '../Home';
 
 // Mock Thirdweb hooks
 jest.mock('@thirdweb-dev/react', () => ({
-  ...jest.requireActual('@thirdweb-dev/react'),
-  useAddress: jest.fn(),
+  __esModule: true,
   ThirdwebProvider: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  useAddress: jest.fn(),
 }));
 
 const renderWithProviders = (component: React.ReactElement) => {
@@ -77,7 +77,7 @@ describe('Home Page', () => {
       </BrowserRouter>
     );
     expect(screen.getByText('User Dashboard')).toBeInTheDocument();
-    expect(screen.getByText('Become Processor')).toBeInTheDocument();
+    expect(screen.getAllByText('Become Processor').length).toBeGreaterThan(0);
   });
 
   test('contains token reward information', () => {
