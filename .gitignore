@@ -1,0 +1,16 @@
+node_modules/
+.env
+.env.local
+dist/
+build/
+*.log
+.DS_Store
+client/build/
+client/node_modules/
+contracts/artifacts/
+contracts/cache/
+contracts/node_modules/
+.vscode/
+.idea/
+tmp/
+uploads/
