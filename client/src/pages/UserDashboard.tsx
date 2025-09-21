@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useAddress } from '@thirdweb-dev/react';
+import XmtpMessageSection from '../components/XmtpMessageSection';
 
 interface Processor {
   address: string;
@@ -179,7 +180,7 @@ const UserDashboard: React.FC = () => {
         <div className="card">
           <h2 className="text-xl font-semibold mb-4">Stake for Data Removal</h2>
           <p className="text-gray-600 mb-6">
-            Stake RN tokens to join the removal list and select trusted processors 
+            Stake RN tokens to join the removal list and select trusted processors
             to handle your sensitive information.
           </p>
 
@@ -257,6 +258,11 @@ const UserDashboard: React.FC = () => {
           </form>
         </div>
       )}
+
+      <XmtpMessageSection
+        availableProcessors={mockProcessors}
+        selectedProcessors={selectedProcessors}
+      />
 
       {/* Current Processor Selection */}
       {userInfo.isStaked && (
