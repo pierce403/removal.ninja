@@ -53,6 +53,39 @@ jobs:
       id: deployment
       uses: actions/deploy-pages@v4
       if: github.ref == 'refs/heads/main'
+      
+    - name: Verify deployment configuration
+      run: |
+        echo "🔍 Verifying build configuration..."
+        cd client
+        
+        # Check homepage field
+        HOMEPAGE=$(grep -o '"homepage": "[^"]*"' package.json | cut -d'"' -f4)
+        echo "Homepage configured as: $HOMEPAGE"
+        
+        if [[ "$HOMEPAGE" == *"/removal.ninja"* ]] && [[ "$HOMEPAGE" != "https://removal.ninja" ]]; then
+          echo "⚠️ WARNING: Homepage may cause double-path issues for custom domain"
+          echo "Expected: https://removal.ninja"
+          echo "Found: $HOMEPAGE"
+        fi
+        
+        # Check build output for asset paths
+        if [ -d "build" ]; then
+          echo "📦 Checking build asset paths..."
+          INDEX_FILE="build/index.html"
+          if [ -f "$INDEX_FILE" ]; then
+            # Check for correct asset paths
+            if grep -q '="/static/' "$INDEX_FILE"; then
+              echo "✅ Assets using root paths: /static/"
+            elif grep -q '="./static/' "$INDEX_FILE"; then
+              echo "✅ Assets using relative paths: ./static/"
+            else
+              echo "⚠️ Unusual asset paths detected"
+              grep -o 'src="[^"]*static[^"]*"' "$INDEX_FILE" | head -3
+              grep -o 'href="[^"]*static[^"]*"' "$INDEX_FILE" | head -3
+            fi
+          fi
+        fi
 
 # Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
 permissions:

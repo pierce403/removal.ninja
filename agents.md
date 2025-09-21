@@ -259,5 +259,41 @@ This incident demonstrates the importance of:
 
 ---
 
+## 🌐 **Deployment Configuration Error: Custom Domain vs GitHub Pages**
+
+### **Incident Summary**
+**Date**: Follow-up Session  
+**Issue**: 404 errors for static assets on custom domain deployment  
+**Error**: `GET https://removal.ninja/removal.ninja/static/css/main.c2913cb6.css net::ERR_ABORTED 404`  
+**Root Cause**: Incorrect `homepage` field in `package.json` for custom domain deployment  
+
+### **What Went Wrong**
+The `homepage` field was configured for GitHub Pages subdirectory deployment:
+```json
+"homepage": "https://pierce403.github.io/removal.ninja"
+```
+
+But the site is deployed to a custom domain root, causing double-path issues:
+- Expected: `https://removal.ninja/static/css/main.css`
+- Actual: `https://removal.ninja/removal.ninja/static/css/main.css`
+
+### **How We Fixed It**
+```json
+"homepage": "https://removal.ninja"
+```
+
+### **Prevention for AI Agents**
+1. **Always verify deployment target** before setting homepage field
+2. **Test asset loading** after any homepage configuration changes
+3. **Document deployment configuration** in README
+4. **Add deployment verification** to CI/CD pipeline
+
+### **Red Flags**
+- ⚠️ Static assets loading from double paths
+- ⚠️ 404 errors on production deployment but local works
+- ⚠️ Mismatch between GitHub Pages and custom domain config
+
+---
+
 *Last Updated: Current Session*  
 *Next Review: After resolution verification*

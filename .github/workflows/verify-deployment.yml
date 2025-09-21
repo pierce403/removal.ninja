@@ -1,0 +1,103 @@
+name: Verify Deployment
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  verify-deployment:
+    runs-on: ubuntu-latest
+    name: Verify Production Deployment
+    
+    steps:
+    - name: Wait for deployment
+      run: sleep 30
+      
+    - name: Check main site accessibility
+      run: |
+        echo "🌐 Testing main site..."
+        curl -f https://removal.ninja || exit 1
+        
+    - name: Check asset loading
+      run: |
+        echo "📦 Testing CSS asset loading..."
+        # Get the main page and extract CSS file name
+        MAIN_PAGE=$(curl -s https://removal.ninja)
+        CSS_FILE=$(echo "$MAIN_PAGE" | grep -o 'href="/static/css/[^"]*"' | head -1 | sed 's/href="//;s/"//')
+        
+        if [ -z "$CSS_FILE" ]; then
+          echo "❌ Could not find CSS file reference"
+          exit 1
+        fi
+        
+        echo "Testing CSS file: https://removal.ninja$CSS_FILE"
+        curl -f "https://removal.ninja$CSS_FILE" || exit 1
+        
+        echo "📦 Testing JS asset loading..."
+        JS_FILE=$(echo "$MAIN_PAGE" | grep -o 'src="/static/js/[^"]*"' | head -1 | sed 's/src="//;s/"//')
+        
+        if [ -z "$JS_FILE" ]; then
+          echo "❌ Could not find JS file reference"
+          exit 1
+        fi
+        
+        echo "Testing JS file: https://removal.ninja$JS_FILE"
+        curl -f "https://removal.ninja$JS_FILE" || exit 1
+        
+    - name: Check for double paths
+      run: |
+        echo "🔍 Checking for double path issues..."
+        MAIN_PAGE=$(curl -s https://removal.ninja)
+        
+        # Check for double paths in asset URLs
+        if echo "$MAIN_PAGE" | grep -q "/removal.ninja/static/"; then
+          echo "❌ Found double path issue: /removal.ninja/static/"
+          echo "$MAIN_PAGE" | grep "/removal.ninja/static/"
+          exit 1
+        fi
+        
+        echo "✅ No double path issues found"
+        
+    - name: Check React app loading
+      run: |
+        echo "⚛️ Testing React app loading..."
+        MAIN_PAGE=$(curl -s https://removal.ninja)
+        
+        # Check for React root div
+        if ! echo "$MAIN_PAGE" | grep -q 'id="root"'; then
+          echo "❌ React root div not found"
+          exit 1
+        fi
+        
+        # Check for basic meta tags
+        if ! echo "$MAIN_PAGE" | grep -q '<title>'; then
+          echo "❌ Title tag not found"
+          exit 1
+        fi
+        
+        echo "✅ React app structure looks good"
+        
+    - name: Performance check
+      run: |
+        echo "⚡ Basic performance check..."
+        START_TIME=$(date +%s%N)
+        curl -s https://removal.ninja > /dev/null
+        END_TIME=$(date +%s%N)
+        DURATION=$(( (END_TIME - START_TIME) / 1000000 ))
+        
+        echo "Site load time: ${DURATION}ms"
+        
+        if [ $DURATION -gt 5000 ]; then
+          echo "⚠️ Site is loading slowly (>5s)"
+        else
+          echo "✅ Site load time is acceptable"
+        fi
+        
+    - name: Report success
+      run: |
+        echo "🎉 All deployment verification checks passed!"
+        echo "✅ Main site accessible"
+        echo "✅ Static assets loading correctly"
+        echo "✅ No double path issues"
+        echo "✅ React app structure intact"
