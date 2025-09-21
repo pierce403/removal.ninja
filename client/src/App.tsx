@@ -1,6 +1,7 @@
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { ThirdwebProvider, metamaskWallet, coinbaseWallet, walletConnect } from '@thirdweb-dev/react';
+import { BaseSepoliaTestnet } from '@thirdweb-dev/chains';
 import Header from './components/Header';
 import Home from './pages/Home';
 import DataBrokers from './pages/DataBrokers';
@@ -8,13 +9,13 @@ import Processors from './pages/Processors';
 import UserDashboard from './pages/UserDashboard';
 import ProcessorDashboard from './pages/ProcessorDashboard';
 
-// Ethereum Mainnet chainId (you can change this for testnets)
-const CHAIN_ID = process.env.NODE_ENV === 'development' ? 'localhost' : 'ethereum';
+// Base Sepolia testnet configuration
+const ACTIVE_CHAIN = BaseSepoliaTestnet;
 
 function App() {
   return (
     <ThirdwebProvider
-      activeChain={CHAIN_ID}
+      activeChain={ACTIVE_CHAIN}
       clientId={process.env.REACT_APP_THIRDWEB_CLIENT_ID}
       supportedWallets={[
         metamaskWallet(),
