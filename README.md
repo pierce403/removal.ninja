@@ -292,6 +292,16 @@ Always review smart contracts before interacting with them on mainnet.
 - ✅ **Local-First Architecture**: No backend dependency for core functionality
 - ✅ **Professional UI/UX**: Modern design with accessibility features
 
+## 📚 Resources
+
+### Privacy Research & Education
+- **[Intel Techniques Data Removal Workbook](https://inteltechniques.com/data/workbook.pdf)**: Comprehensive guide to data broker removal techniques and verification methods by Michael Bazzell
+
+### Technical Documentation
+- [Thirdweb Documentation](https://portal.thirdweb.com/)
+- [OpenZeppelin Contracts](https://docs.openzeppelin.com/)
+- [Base Network Documentation](https://docs.base.org/)
+
 ---
 
 Built with ❤️ for privacy and decentralization

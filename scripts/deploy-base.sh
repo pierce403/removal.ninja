@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# Deploy RemovalNinja to Base Sepolia Testnet
-# This script deploys the contract using Foundry and updates frontend configuration
+# Deploy RemovalNinja Modular System to Base Sepolia Testnet
+# This script deploys the complete modular system using Foundry
 
 set -e
 
-echo "🚀 Deploying RemovalNinja to Base Sepolia Testnet..."
+echo "🚀 Deploying RemovalNinja Modular System to Base Sepolia Testnet..."
 
 # Check if .env file exists
 if [ ! -f foundry/.env ]; then
@@ -40,6 +40,7 @@ echo "   - Deployer: $DEPLOYER_ADDRESS"
 echo "   - Balance: $BALANCE ETH"
 echo "   - Network: Base Sepolia (Chain ID: 84532)"
 echo "   - RPC: $BASE_SEPOLIA_RPC_URL"
+echo "   - Contracts: Token + Registry + TaskFactory (3 contracts)"
 
 # Check if balance is sufficient (at least 0.01 ETH)
 BALANCE_WEI=$(echo $BALANCE | cut -d' ' -f1)
@@ -64,8 +65,8 @@ forge build
 
 echo "📡 Deploying to Base Sepolia..."
 
-# Deploy the contract
-forge script script/DeployBase.s.sol:DeployBase \
+# Deploy the modular contract system
+forge script script/DeployBaseSepolia.s.sol:DeployBaseSepolia \
     --rpc-url $BASE_SEPOLIA_RPC_URL \
     --private-key $PRIVATE_KEY \
     --broadcast \
@@ -78,25 +79,42 @@ if [ $? -eq 0 ]; then
     echo ""
     echo "✅ Deployment successful!"
     
-    # Extract contract address from deployment output
+    # Extract contract addresses from deployment output
     if [ -f "deployment-base-sepolia.json" ]; then
-        CONTRACT_ADDRESS=$(cat deployment-base-sepolia.json | grep -o '"contractAddress": "[^"]*"' | cut -d'"' -f4)
-        echo "📋 Contract deployed to: $CONTRACT_ADDRESS"
-        echo "🔍 View on BaseScan: https://sepolia.basescan.org/address/$CONTRACT_ADDRESS"
+        echo "📋 Deployment Summary:"
+        
+        # Parse the JSON for all contract addresses
+        TOKEN_ADDRESS=$(cat deployment-base-sepolia.json | grep -A1 '"RemovalNinja"' | tail -n1 | cut -d'"' -f4)
+        REGISTRY_ADDRESS=$(cat deployment-base-sepolia.json | grep -A1 '"DataBrokerRegistry"' | tail -n1 | cut -d'"' -f4)
+        FACTORY_ADDRESS=$(cat deployment-base-sepolia.json | grep -A1 '"TaskFactory"' | tail -n1 | cut -d'"' -f4)
+        
+        echo "   Token (RN):     $TOKEN_ADDRESS"
+        echo "   Registry:       $REGISTRY_ADDRESS"
+        echo "   Task Factory:   $FACTORY_ADDRESS"
+        echo ""
+        echo "🔍 View on BaseScan:"
+        echo "   Token:     https://sepolia.basescan.org/address/$TOKEN_ADDRESS"
+        echo "   Registry:  https://sepolia.basescan.org/address/$REGISTRY_ADDRESS"
+        echo "   Factory:   https://sepolia.basescan.org/address/$FACTORY_ADDRESS"
         
         echo ""
         echo "🔧 Next steps:"
-        echo "1. Update client/src/config/contracts.ts with the new contract address"
-        echo "2. Test the contract functions on BaseScan"
-        echo "3. Update your frontend to use the deployed contract"
-        echo "4. Test wallet connection with Base Sepolia network"
+        echo "1. Update client/src/config/contracts.ts with the new contract addresses"
+        echo "2. Switch ACTIVE_NETWORK to BASE_SEPOLIA in contracts.ts"
+        echo "3. Test the contract functions on BaseScan"
+        echo "4. Add Base Sepolia network to MetaMask if needed"
+        echo "5. Get some test ETH from Base Sepolia faucet"
         
         echo ""
-        echo "💡 Frontend configuration:"
-        echo "   Update this line in client/src/config/contracts.ts:"
-        echo "   address: \"$CONTRACT_ADDRESS\","
+        echo "💡 Frontend configuration updates needed:"
+        echo "   In client/src/config/contracts.ts, update BASE_SEPOLIA section:"
+        echo "   REMOVAL_NINJA_TOKEN: { address: \"$TOKEN_ADDRESS\" }"
+        echo "   DATA_BROKER_REGISTRY: { address: \"$REGISTRY_ADDRESS\" }"
+        echo "   TASK_FACTORY: { address: \"$FACTORY_ADDRESS\" }"
+        echo ""
+        echo "   And change: export const ACTIVE_NETWORK = SUPPORTED_NETWORKS.BASE_SEPOLIA;"
     else
-        echo "⚠️  Deployment info file not found. Check logs above for contract address."
+        echo "⚠️  Deployment info file not found. Check logs above for contract addresses."
     fi
 else
     echo "❌ Deployment failed! Check the error messages above."
@@ -104,4 +122,6 @@ else
 fi
 
 echo ""
-echo "🎉 Deployment process complete! 🥷"
+echo "🎉 RemovalNinja Modular System deployment complete! 🥷"
+echo "📚 3 initial brokers added: Spokeo, Radaris, Whitepages"
+echo "💰 100,000 RN tokens minted to deployer for testing"

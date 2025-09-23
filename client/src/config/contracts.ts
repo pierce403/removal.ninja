@@ -1,18 +1,50 @@
-// Contract configuration for RemovalNinja protocol
+// Contract configuration for RemovalNinja modular protocol
 
-// Base Sepolia Testnet Configuration
+// Contract addresses for different networks
 export const CONTRACTS = {
-  BASE_SEPOLIA: {
-    REMOVAL_NINJA: {
-      // This will be updated after deployment to Base Sepolia
-      address: "0x0000000000000000000000000000000000000000", // Replace with actual deployed address
+  LOCALHOST: {
+    REMOVAL_NINJA_TOKEN: {
+      address: "0x5FbDB2315678afecb367f032d93F642f64180aa3",
       abi: [], // Will be populated with contract ABI
+    },
+    DATA_BROKER_REGISTRY: {
+      address: "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512", 
+      abi: [], // Will be populated with contract ABI
+    },
+    TASK_FACTORY: {
+      address: "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
+      abi: [], // Will be populated with contract ABI
+    },
+  },
+  BASE_SEPOLIA: {
+    REMOVAL_NINJA_TOKEN: {
+      address: "0x0000000000000000000000000000000000000000", // To be deployed
+      abi: [],
+    },
+    DATA_BROKER_REGISTRY: {
+      address: "0x0000000000000000000000000000000000000000", // To be deployed
+      abi: [],
+    },
+    TASK_FACTORY: {
+      address: "0x0000000000000000000000000000000000000000", // To be deployed
+      abi: [],
     },
   },
 } as const;
 
 // Network configuration
 export const SUPPORTED_NETWORKS = {
+  LOCALHOST: {
+    chainId: 31337,
+    name: "Localhost",
+    rpcUrl: "http://127.0.0.1:8545",
+    blockExplorer: "http://localhost:8545",
+    nativeCurrency: {
+      name: "Ethereum",
+      symbol: "ETH", 
+      decimals: 18,
+    },
+  },
   BASE_SEPOLIA: {
     chainId: 84532,
     name: "Base Sepolia",
@@ -26,12 +58,20 @@ export const SUPPORTED_NETWORKS = {
   },
 } as const;
 
-// Current active network
-export const ACTIVE_NETWORK = SUPPORTED_NETWORKS.BASE_SEPOLIA;
+// Current active network (switch to LOCALHOST for development)
+export const ACTIVE_NETWORK = SUPPORTED_NETWORKS.LOCALHOST;
+
+// Get contracts for current network
+const getCurrentNetworkContracts = () => {
+  const isLocalhost = ACTIVE_NETWORK.chainId === 31337;
+  return isLocalhost ? CONTRACTS.LOCALHOST : CONTRACTS.BASE_SEPOLIA;
+};
 
 // Contract addresses for current network
 export const CONTRACT_ADDRESSES = {
-  REMOVAL_NINJA: CONTRACTS.BASE_SEPOLIA.REMOVAL_NINJA.address,
+  REMOVAL_NINJA_TOKEN: getCurrentNetworkContracts().REMOVAL_NINJA_TOKEN.address,
+  DATA_BROKER_REGISTRY: getCurrentNetworkContracts().DATA_BROKER_REGISTRY.address,
+  TASK_FACTORY: getCurrentNetworkContracts().TASK_FACTORY.address,
 } as const;
 
 // Common contract constants
@@ -45,39 +85,53 @@ export const CONTRACT_CONSTANTS = {
 } as const;
 
 // Environment-specific configuration
-export const getContractAddress = (): string => {
-  const address = CONTRACT_ADDRESSES.REMOVAL_NINJA;
+export const getContractAddress = (contractName: keyof typeof CONTRACT_ADDRESSES): string => {
+  const address = CONTRACT_ADDRESSES[contractName];
   
   if (address === "0x0000000000000000000000000000000000000000") {
-    console.warn("⚠️  Contract address not configured. Please deploy to Base Sepolia and update config/contracts.ts");
+    console.warn(`⚠️  ${contractName} address not configured. Please deploy and update config/contracts.ts`);
   }
   
   return address;
 };
+
+// Helper functions for each contract
+export const getTokenAddress = () => getContractAddress('REMOVAL_NINJA_TOKEN');
+export const getRegistryAddress = () => getContractAddress('DATA_BROKER_REGISTRY');
+export const getFactoryAddress = () => getContractAddress('TASK_FACTORY');
 
 // Helper function to validate network
 export const isValidNetwork = (chainId: number): boolean => {
   return chainId === ACTIVE_NETWORK.chainId;
 };
 
-// Network switch helper
-export const addBaseSepoliaNetwork = async () => {
+// Network switch helpers
+export const addNetworkToWallet = async (networkKey: keyof typeof SUPPORTED_NETWORKS) => {
+  const network = SUPPORTED_NETWORKS[networkKey];
+  
   if (typeof window.ethereum !== 'undefined') {
     try {
       await window.ethereum.request({
         method: 'wallet_addEthereumChain',
         params: [
           {
-            chainId: `0x${ACTIVE_NETWORK.chainId.toString(16)}`,
-            chainName: ACTIVE_NETWORK.name,
-            rpcUrls: [ACTIVE_NETWORK.rpcUrl],
-            nativeCurrency: ACTIVE_NETWORK.nativeCurrency,
-            blockExplorerUrls: [ACTIVE_NETWORK.blockExplorer],
+            chainId: `0x${network.chainId.toString(16)}`,
+            chainName: network.name,
+            rpcUrls: [network.rpcUrl],
+            nativeCurrency: network.nativeCurrency,
+            blockExplorerUrls: [network.blockExplorer],
           },
         ],
       });
     } catch (error) {
-      console.error('Failed to add Base Sepolia network:', error);
+      console.error(`Failed to add ${network.name} network:`, error);
     }
   }
 };
+
+// Convenience functions
+export const addBaseSepoliaNetwork = () => addNetworkToWallet('BASE_SEPOLIA');
+export const addLocalhostNetwork = () => addNetworkToWallet('LOCALHOST');
+
+// Check if we're in development mode
+export const isDevelopment = () => ACTIVE_NETWORK.chainId === 31337;

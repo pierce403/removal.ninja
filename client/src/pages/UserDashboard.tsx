@@ -1,111 +1,174 @@
-import React, { useState } from 'react';
-import { useAddress } from '@thirdweb-dev/react';
-import XmtpMessageSection from '../components/XmtpMessageSection';
+import React, { useState, useEffect } from 'react';
+import { useAddress, useContract, useContractRead, useContractWrite } from '@thirdweb-dev/react';
+import { getFactoryAddress, getRegistryAddress, getTokenAddress } from '../config/contracts';
+import { DataBroker, RemovalTask, TaskStatus, CreateTaskForm, TASK_STATUS_LABELS, TASK_STATUS_COLORS } from '../types/contracts';
 
-interface Processor {
-  address: string;
-  name: string;
-  description: string;
-  active: boolean;
-  reputation: number;
-  completedRemovals: number;
-}
+// Contract ABIs for the modular system
+const FACTORY_ABI = [
+  "function createTask(uint256 brokerId, bytes32 subjectCommit, uint256 payout, uint256 duration) external returns (uint256 taskId, address taskContract)",
+  "function getUserTasks(address user) external view returns (uint256[] memory)",
+  "function getStats() external view returns (uint256 totalTasks)",
+  "function tasks(uint256) external view returns (address)"
+];
 
-interface UserStakeInfo {
-  isStaked: boolean;
-  stakeAmount: string;
-  selectedProcessors: string[];
-  removalsRequested: number;
-  removalsCompleted: number;
-}
+const REGISTRY_ABI = [
+  "function brokers(uint256) external view returns (uint256 id, string name, string website, string removalLink, string contact, uint256 weight, bool isActive, uint256 totalRemovals, uint256 totalDisputes)",
+  "function nextBrokerId() external view returns (uint256)"
+];
 
-// Mock data for development
-const mockProcessors: Processor[] = [
-  {
-    address: '0x1234567890123456789012345678901234567890',
-    name: 'PrivacyPro Services',
-    description: 'Professional data removal service with 99% success rate',
-    active: true,
-    reputation: 98,
-    completedRemovals: 1250
-  },
-  {
-    address: '0x2345678901234567890123456789012345678901',
-    name: 'FastRemoval Inc',
-    description: 'Quick turnaround removal processing within 48 hours',
-    active: true,
-    reputation: 95,
-    completedRemovals: 876
-  },
-  {
-    address: '0x3456789012345678901234567890123456789012',
-    name: 'SecureData Removals',
-    description: 'Security-focused removal service with encrypted processing',
-    active: true,
-    reputation: 97,
-    completedRemovals: 1543
-  }
+const TOKEN_ABI = [
+  "function balanceOf(address) external view returns (uint256)",
+  "function allowance(address owner, address spender) external view returns (uint256)",
+  "function approve(address spender, uint256 amount) external returns (bool)",
+  "function transfer(address to, uint256 amount) external returns (bool)"
 ];
 
 const UserDashboard: React.FC = () => {
   const address = useAddress();
-  const [staking, setStaking] = useState(false);
-  const [stakeAmount, setStakeAmount] = useState('10');
-  const [selectedProcessors, setSelectedProcessors] = useState<string[]>([]);
-  const [userInfo] = useState<UserStakeInfo>({
-    isStaked: false,
-    stakeAmount: '0',
-    selectedProcessors: [],
-    removalsRequested: 0,
-    removalsCompleted: 0
+  
+  // Contract hooks
+  const { contract: factoryContract } = useContract(getFactoryAddress(), FACTORY_ABI);
+  const { contract: registryContract } = useContract(getRegistryAddress(), REGISTRY_ABI);
+  const { contract: tokenContract } = useContract(getTokenAddress(), TOKEN_ABI);
+  
+  const { data: userTaskIds } = useContractRead(factoryContract, "getUserTasks", [address]);
+  const { data: nextBrokerId } = useContractRead(registryContract, "nextBrokerId");
+  const { data: tokenBalance } = useContractRead(tokenContract, "balanceOf", [address]);
+  const { data: tokenAllowance } = useContractRead(tokenContract, "allowance", [address, getFactoryAddress()]);
+  
+  const { mutateAsync: createTask } = useContractWrite(factoryContract, "createTask");
+  const { mutateAsync: approveTokens } = useContractWrite(tokenContract, "approve");
+  
+  // Component state
+  const [brokers, setBrokers] = useState<DataBroker[]>([]);
+  const [userTasks, setUserTasks] = useState<RemovalTask[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [createFormData, setCreateFormData] = useState<CreateTaskForm>({
+    brokerId: '',
+    payout: '50',
+    duration: '30',
+    description: ''
   });
+
+  // Fetch brokers from registry
+  const fetchBrokers = async () => {
+    if (!registryContract || !nextBrokerId) return;
+    
+    try {
+      const brokersData: DataBroker[] = [];
+      
+      for (let i = 1; i < Number(nextBrokerId); i++) {
+        try {
+          const brokerData = await registryContract.call("brokers", [i]);
+          if (brokerData && brokerData[6]) { // isActive
+            brokersData.push({
+              id: Number(brokerData[0]),
+              name: brokerData[1],
+              website: brokerData[2],
+              removalLink: brokerData[3],
+              contact: brokerData[4],
+              weight: Number(brokerData[5]),
+              isActive: brokerData[6],
+              totalRemovals: Number(brokerData[7]),
+              totalDisputes: Number(brokerData[8])
+            });
+          }
+        } catch (error) {
+          console.error(`Error fetching broker ${i}:`, error);
+        }
+      }
+      
+      setBrokers(brokersData);
+    } catch (error) {
+      console.error('Error fetching brokers:', error);
+    }
+  };
+
+  // Load data on component mount
+  useEffect(() => {
+    fetchBrokers();
+  }, [registryContract, nextBrokerId]);
 
   const formatAddress = (address: string): string => {
     return `${address.slice(0, 6)}...${address.slice(-4)}`;
   };
 
-  const handleProcessorSelection = (processorAddress: string) => {
-    setSelectedProcessors(prev => {
-      if (prev.includes(processorAddress)) {
-        return prev.filter(addr => addr !== processorAddress);
-      } else {
-        return [...prev, processorAddress];
-      }
-    });
+  const formatTokenAmount = (amount: string | number): string => {
+    const value = typeof amount === 'string' ? parseFloat(amount) : amount;
+    return (value / Math.pow(10, 18)).toFixed(2);
   };
 
-  const handleStakeForRemoval = async (e: React.FormEvent) => {
+  const handleCreateTask = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!address) {
-      alert('Please connect your wallet first');
+    if (!address || !factoryContract || !tokenContract) {
+      alert('Please connect your wallet and ensure contracts are loaded');
       return;
     }
 
-    if (selectedProcessors.length === 0) {
-      alert('Please select at least one processor');
+    const payout = parseFloat(createFormData.payout) * Math.pow(10, 18); // Convert to wei
+    const duration = parseInt(createFormData.duration) * 24 * 60 * 60; // Convert days to seconds
+    
+    if (payout < 10 * Math.pow(10, 18)) {
+      alert('Minimum payout is 10 RN tokens');
       return;
     }
 
-    if (parseFloat(stakeAmount) < 10) {
-      alert('Minimum stake amount is 10 RN tokens');
-      return;
-    }
-
-    setStaking(true);
+    setCreating(true);
     try {
-      // TODO: Integrate with smart contract
-      console.log('Staking for removal:', {
-        amount: stakeAmount,
-        processors: selectedProcessors
+      // Check if we need to approve tokens
+      const currentAllowance = tokenAllowance ? Number(tokenAllowance) : 0;
+      if (currentAllowance < payout) {
+        console.log('Approving tokens...');
+        await approveTokens({
+          args: [getFactoryAddress(), payout.toString()]
+        });
+        // Wait a bit for approval transaction to be mined
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      }
+
+      // Generate a simple subject commit (in production, this would be a proper hash)
+      const subjectCommit = `0x${Math.random().toString(16).substring(2).padStart(64, '0')}`;
+
+      // Create the task
+      const result = await createTask({
+        args: [
+          parseInt(createFormData.brokerId),
+          subjectCommit,
+          payout.toString(),
+          duration
+        ]
       });
-      alert(`Would stake ${stakeAmount} RN tokens and select ${selectedProcessors.length} processors for data removal`);
-    } catch (error) {
-      console.error('Error staking:', error);
-      alert('Error staking tokens');
+
+      console.log('Task created successfully:', result);
+      alert(`Removal task created successfully! 🎉`);
+      
+      // Reset form
+      setCreateFormData({
+        brokerId: '',
+        payout: '50',
+        duration: '30',
+        description: ''
+      });
+      setShowCreateForm(false);
+      
+    } catch (error: any) {
+      console.error('Error creating task:', error);
+      const errorMessage = error?.reason || error?.message || 'Unknown error occurred';
+      alert(`Error creating task: ${errorMessage}`);
     } finally {
-      setStaking(false);
+      setCreating(false);
     }
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setCreateFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
   };
 
   if (!address) {
@@ -113,7 +176,7 @@ const UserDashboard: React.FC = () => {
       <div className="card text-center">
         <h1 className="text-2xl font-bold mb-4">User Dashboard</h1>
         <p className="text-gray-600 mb-6">
-          Connect your wallet to access your privacy dashboard and manage data removal requests.
+          Connect your wallet to create removal tasks and track your data removal progress.
         </p>
       </div>
     );
@@ -122,161 +185,208 @@ const UserDashboard: React.FC = () => {
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">User Dashboard</h1>
-        <p className="text-gray-600 mt-2">
-          Manage your data removal requests and processor preferences
-        </p>
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">User Dashboard</h1>
+          <p className="text-gray-600 mt-2">
+            Create and manage your data removal tasks
+          </p>
+        </div>
+        <button
+          onClick={() => setShowCreateForm(!showCreateForm)}
+          className="btn"
+        >
+          {showCreateForm ? 'Cancel' : 'Create Removal Task'}
+        </button>
       </div>
 
       {/* User Status */}
-      <div className="grid grid-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="card">
-          <h2 className="text-xl font-semibold mb-4">Your Status</h2>
+          <h2 className="text-xl font-semibold mb-4">Wallet Info</h2>
           <div className="space-y-3">
             <div className="flex justify-between">
-              <span className="text-gray-600">Wallet Address:</span>
+              <span className="text-gray-600">Address:</span>
               <span className="font-mono">{formatAddress(address)}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-600">Staking Status:</span>
-              <span className={`status-badge ${userInfo.isStaked ? 'status-active' : 'status-pending'}`}>
-                {userInfo.isStaked ? 'Staked' : 'Not Staked'}
+              <span className="text-gray-600">RN Balance:</span>
+              <span className="font-semibold">
+                {tokenBalance ? formatTokenAmount(tokenBalance.toString()) : '0.00'} RN
               </span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">Stake Amount:</span>
-              <span className="font-semibold">{userInfo.stakeAmount} RN</span>
             </div>
           </div>
         </div>
 
         <div className="card">
-          <h2 className="text-xl font-semibold mb-4">Removal Stats</h2>
+          <h2 className="text-xl font-semibold mb-4">Task Stats</h2>
           <div className="space-y-3">
             <div className="flex justify-between">
-              <span className="text-gray-600">Requests Submitted:</span>
-              <span className="font-semibold">{userInfo.removalsRequested}</span>
+              <span className="text-gray-600">Total Tasks:</span>
+              <span className="font-semibold">{userTaskIds ? userTaskIds.length : 0}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-600">Completed Removals:</span>
-              <span className="font-semibold text-green-600">{userInfo.removalsCompleted}</span>
+              <span className="text-gray-600">Active Tasks:</span>
+              <span className="font-semibold text-blue-600">
+                {userTasks.filter(t => t.currentStatus < TaskStatus.Verified).length}
+              </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-600">Success Rate:</span>
-              <span className="font-semibold">
-                {userInfo.removalsRequested > 0 
-                  ? `${Math.round((userInfo.removalsCompleted / userInfo.removalsRequested) * 100)}%`
-                  : 'N/A'
-                }
+              <span className="text-gray-600">Completed:</span>
+              <span className="font-semibold text-green-600">
+                {userTasks.filter(t => t.currentStatus === TaskStatus.Verified).length}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div className="card">
+          <h2 className="text-xl font-semibold mb-4">Available Brokers</h2>
+          <div className="space-y-3">
+            <div className="flex justify-between">
+              <span className="text-gray-600">Total Brokers:</span>
+              <span className="font-semibold">{brokers.length}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">High Impact:</span>
+              <span className="font-semibold text-red-600">
+                {brokers.filter(b => b.weight >= 300).length}
               </span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Stake for Removal */}
-      {!userInfo.isStaked && (
+      {/* Create Task Form */}
+      {showCreateForm && (
         <div className="card">
-          <h2 className="text-xl font-semibold mb-4">Stake for Data Removal</h2>
+          <h2 className="text-xl font-semibold mb-4">Create Removal Task</h2>
           <p className="text-gray-600 mb-6">
-            Stake RN tokens to join the removal list and select trusted processors
-            to handle your sensitive information.
+            Create a task for a worker to remove your data from a specific broker.
+            Higher payouts attract better workers.
           </p>
 
-          <form onSubmit={handleStakeForRemoval} className="space-y-6">
+          <form onSubmit={handleCreateTask} className="space-y-6">
             <div className="form-group">
-              <label className="form-label">Stake Amount (minimum 10 RN)</label>
+              <label className="form-label">Data Broker *</label>
+              <select
+                name="brokerId"
+                value={createFormData.brokerId}
+                onChange={handleInputChange}
+                className="form-input"
+                required
+              >
+                <option value="">Select a broker...</option>
+                {brokers.map((broker) => (
+                  <option key={broker.id} value={broker.id}>
+                    {broker.name} - {broker.weight >= 300 ? 'High Impact' : broker.weight >= 200 ? 'Medium Impact' : 'Standard'} 
+                    ({broker.weight / 100}x multiplier)
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">Payout Amount (RN tokens) *</label>
               <input
                 type="number"
-                value={stakeAmount}
-                onChange={(e) => setStakeAmount(e.target.value)}
+                name="payout"
+                value={createFormData.payout}
+                onChange={handleInputChange}
                 className="form-input"
                 min="10"
                 step="1"
                 required
               />
               <p className="text-sm text-gray-500 mt-1">
-                Higher stake amounts may receive priority processing
+                Minimum 10 RN. Higher amounts attract more experienced workers.
               </p>
             </div>
 
             <div className="form-group">
-              <label className="form-label">Select Trusted Processors</label>
-              <p className="text-sm text-gray-600 mb-4">
-                Choose processors you trust with your personal information. 
-                You can select multiple processors for redundancy.
+              <label className="form-label">Task Duration (days) *</label>
+              <input
+                type="number"
+                name="duration"
+                value={createFormData.duration}
+                onChange={handleInputChange}
+                className="form-input"
+                min="7"
+                max="90"
+                step="1"
+                required
+              />
+              <p className="text-sm text-gray-500 mt-1">
+                How long workers have to complete the removal (7-90 days)
               </p>
-              
-              <div className="space-y-3">
-                {mockProcessors.map((processor) => (
-                  <div 
-                    key={processor.address}
-                    className={`border rounded-lg p-4 cursor-pointer transition-colors ${
-                      selectedProcessors.includes(processor.address)
-                        ? 'border-ninja-500 bg-ninja-50'
-                        : 'border-gray-200 hover:border-gray-300'
-                    }`}
-                    onClick={() => handleProcessorSelection(processor.address)}
-                  >
-                    <div className="flex items-start gap-3">
-                      <input
-                        type="checkbox"
-                        checked={selectedProcessors.includes(processor.address)}
-                        onChange={() => handleProcessorSelection(processor.address)}
-                        className="mt-1"
-                      />
-                      <div className="flex-1">
-                        <div className="flex justify-between items-start mb-2">
-                          <h3 className="font-semibold">{processor.name}</h3>
-                          <div className="flex gap-2">
-                            <span className="status-badge status-active">
-                              {processor.reputation}% reputation
-                            </span>
-                          </div>
-                        </div>
-                        <p className="text-gray-600 text-sm mb-2">{processor.description}</p>
-                        <div className="flex justify-between text-sm text-gray-500">
-                          <span>{formatAddress(processor.address)}</span>
-                          <span>{processor.completedRemovals} completed removals</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
             </div>
 
-            <button
-              type="submit"
-              disabled={staking || selectedProcessors.length === 0}
-              className="btn w-full flex items-center justify-center gap-2"
-            >
-              {staking && <div className="loading"></div>}
-              Stake {stakeAmount} RN Tokens
-            </button>
+            <div className="form-group">
+              <label className="form-label">Description (Optional)</label>
+              <textarea
+                name="description"
+                value={createFormData.description}
+                onChange={handleInputChange}
+                className="form-textarea"
+                placeholder="Any specific instructions or requirements for the removal..."
+                rows={3}
+              />
+            </div>
+
+            <div className="flex gap-4">
+              <button
+                type="submit"
+                disabled={creating}
+                className="btn flex items-center gap-2"
+              >
+                {creating && <div className="loading"></div>}
+                Create Task
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowCreateForm(false)}
+                className="btn-secondary"
+              >
+                Cancel
+              </button>
+            </div>
           </form>
         </div>
       )}
 
-      <XmtpMessageSection
-        availableProcessors={mockProcessors}
-        selectedProcessors={selectedProcessors}
-      />
-
-      {/* Current Processor Selection */}
-      {userInfo.isStaked && (
-        <div className="card">
-          <h2 className="text-xl font-semibold mb-4">Your Selected Processors</h2>
-          <p className="text-gray-600 mb-4">
-            These processors handle your data removal requests
-          </p>
-          
-          <div className="text-center py-8 text-gray-500">
-            <p>No processors selected yet. Complete staking to see your processors here.</p>
+      {/* Your Tasks */}
+      <div className="card">
+        <h2 className="text-xl font-semibold mb-4">Your Removal Tasks</h2>
+        
+        {loading ? (
+          <div className="flex justify-center py-8">
+            <div className="loading"></div>
           </div>
-        </div>
-      )}
+        ) : userTaskIds && userTaskIds.length > 0 ? (
+          <div className="space-y-4">
+            <p className="text-gray-600">
+              You have {userTaskIds.length} task{userTaskIds.length !== 1 ? 's' : ''} created.
+            </p>
+            <div className="text-center py-8 text-gray-500">
+              <p>Task details will be loaded here.</p>
+              <p className="text-sm mt-2">Contract integration in progress...</p>
+            </div>
+          </div>
+        ) : (
+          <div className="text-center py-8">
+            <h3 className="text-lg font-semibold mb-2">No Tasks Yet</h3>
+            <p className="text-gray-600 mb-4">
+              Create your first removal task to get started with data removal.
+            </p>
+            <button
+              onClick={() => setShowCreateForm(true)}
+              className="btn"
+            >
+              Create Your First Task
+            </button>
+          </div>
+        )}
+      </div>
 
       {/* Help Section */}
       <div className="card">
@@ -284,19 +394,23 @@ const UserDashboard: React.FC = () => {
         <div className="space-y-4 text-sm text-gray-600">
           <div className="flex gap-3">
             <span className="text-ninja-600 font-bold">1.</span>
-            <span>Stake RN tokens to join the removal list (minimum 10 RN)</span>
+            <span>Choose a data broker and create a removal task with a payout</span>
           </div>
           <div className="flex gap-3">
             <span className="text-ninja-600 font-bold">2.</span>
-            <span>Select trusted processors you're comfortable sharing your information with</span>
+            <span>Workers take on your task and handle the removal process</span>
           </div>
           <div className="flex gap-3">
             <span className="text-ninja-600 font-bold">3.</span>
-            <span>Processors handle removal requests from data brokers on your behalf</span>
+            <span>Workers submit evidence of successful removal</span>
           </div>
           <div className="flex gap-3">
             <span className="text-ninja-600 font-bold">4.</span>
-            <span>Track progress and verify completions through zkEmail proofs</span>
+            <span>Verifiers check the evidence and confirm completion</span>
+          </div>
+          <div className="flex gap-3">
+            <span className="text-ninja-600 font-bold">5.</span>
+            <span>Payment is released to the worker upon verification</span>
           </div>
         </div>
       </div>

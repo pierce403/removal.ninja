@@ -23,27 +23,15 @@
     "removal",
     "decentralized",
     "blockchain",
-    "privacy"
+    "privacy",
+    "web3",
+    "ethereum",
+    "foundry"
   ],
-  "author": "removal.ninja",
-  "license": "MIT",
-  "dependencies": {
-    "bcrypt": "^5.1.1",
-    "cors": "^2.8.5",
-    "dotenv": "^16.3.1",
-    "ethers": "^6.8.0",
-    "express": "^4.18.2",
-    "express-rate-limit": "^6.10.0",
-    "helmet": "^7.0.0",
-    "jsonwebtoken": "^9.0.2",
-    "mongoose": "^7.5.0",
-    "multer": "^1.4.5-lts.1"
-  },
+  "author": "Pierce",
+  "license": "Apache-2.0",
+  "dependencies": {},
   "devDependencies": {
-    "@socketsecurity/cli": "^1.1.22",
-    "concurrently": "^8.2.1",
-    "jest": "^29.7.0",
-    "nodemon": "^3.0.1",
-    "supertest": "^6.3.3"
+    "@socketsecurity/cli": "^1.1.22"
   }
 }

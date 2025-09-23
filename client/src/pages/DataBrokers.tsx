@@ -1,66 +1,82 @@
-import React, { useState } from 'react';
-import { useAddress } from '@thirdweb-dev/react';
+import React, { useState, useEffect } from 'react';
+import { useAddress, useContract, useContractRead, useContractWrite } from '@thirdweb-dev/react';
+import { getRegistryAddress, CONTRACT_CONSTANTS } from '../config/contracts';
+import { DataBroker, AddBrokerForm, RegistryStats, WEIGHT_LABELS, WEIGHT_COLORS } from '../types/contracts';
 
-interface DataBroker {
-  id: string;
-  name: string;
-  website: string;
-  removalInstructions: string;
-  verified: boolean;
-  submittedBy: string;
-  dateSubmitted: string;
-}
-
-// Mock data for development
-const mockBrokers: DataBroker[] = [
-  {
-    id: '1',
-    name: 'Acxiom',
-    website: 'https://acxiom.com',
-    removalInstructions: 'Visit privacy center and submit removal request with ID verification',
-    verified: true,
-    submittedBy: '0x1234...5678',
-    dateSubmitted: '2024-01-15'
-  },
-  {
-    id: '2',
-    name: 'LexisNexis',
-    website: 'https://lexisnexis.com',
-    removalInstructions: 'Email privacy team with full name and address for removal',
-    verified: true,
-    submittedBy: '0x2345...6789',
-    dateSubmitted: '2024-01-10'
-  },
-  {
-    id: '3',
-    name: 'Spokeo',
-    website: 'https://spokeo.com',
-    removalInstructions: 'Use online opt-out form and verify email address',
-    verified: false,
-    submittedBy: '0x3456...7890',
-    dateSubmitted: '2024-01-20'
-  }
+// Simple ABI for DataBrokerRegistryUltraSimple contract
+const REGISTRY_ABI = [
+  "function addBroker(string calldata name, string calldata website, string calldata removalLink, string calldata contact, uint256 weight) external returns (uint256)",
+  "function brokers(uint256) external view returns (uint256 id, string name, string website, string removalLink, string contact, uint256 weight, bool isActive, uint256 totalRemovals, uint256 totalDisputes)",
+  "function getStats() external view returns (uint256 totalBrokers, uint256 activeBrokers)",
+  "function nextBrokerId() external view returns (uint256)"
 ];
-
-interface FormData {
-  name: string;
-  website: string;
-  removalInstructions: string;
-}
 
 const DataBrokers: React.FC = () => {
   const address = useAddress();
-  const [brokers] = useState<DataBroker[]>(mockBrokers);
-  const [loading] = useState(false);
+  
+  // Contract hooks
+  const { contract } = useContract(getRegistryAddress(), REGISTRY_ABI);
+  const { data: nextBrokerId } = useContractRead(contract, "nextBrokerId");
+  const { data: stats } = useContractRead(contract, "getStats");
+  const { mutateAsync: addBroker } = useContractWrite(contract, "addBroker");
+  
+  // Component state
+  const [brokers, setBrokers] = useState<DataBroker[]>([]);
+  const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [showForm, setShowForm] = useState(false);
-  const [formData, setFormData] = useState<FormData>({
+  const [formData, setFormData] = useState<AddBrokerForm>({
     name: '',
     website: '',
-    removalInstructions: ''
+    removalLink: '',
+    contact: '',
+    weight: '300' // Default to high impact
   });
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  // Fetch brokers from contract
+  const fetchBrokers = async () => {
+    if (!contract || !nextBrokerId) return;
+    
+    setLoading(true);
+    try {
+      const brokersData: DataBroker[] = [];
+      
+      // Fetch each broker by ID (starting from 1)
+      for (let i = 1; i < Number(nextBrokerId); i++) {
+        try {
+          const brokerData = await contract.call("brokers", [i]);
+          if (brokerData && brokerData[6]) { // isActive is at index 6
+            brokersData.push({
+              id: Number(brokerData[0]),
+              name: brokerData[1],
+              website: brokerData[2],
+              removalLink: brokerData[3],
+              contact: brokerData[4],
+              weight: Number(brokerData[5]),
+              isActive: brokerData[6],
+              totalRemovals: Number(brokerData[7]),
+              totalDisputes: Number(brokerData[8])
+            });
+          }
+        } catch (error) {
+          console.error(`Error fetching broker ${i}:`, error);
+        }
+      }
+      
+      setBrokers(brokersData);
+    } catch (error) {
+      console.error('Error fetching brokers:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Load brokers on component mount and when contract data changes
+  useEffect(() => {
+    fetchBrokers();
+  }, [contract, nextBrokerId]);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
@@ -75,16 +91,44 @@ const DataBrokers: React.FC = () => {
       return;
     }
 
+    if (!contract) {
+      alert('Contract not loaded. Please try again.');
+      return;
+    }
+
     setSubmitting(true);
     try {
-      // TODO: Integrate with smart contract
-      console.log('Submitting broker:', formData);
-      alert('Data broker submission would be sent to smart contract. This will earn you 100 RN tokens!');
-      setFormData({ name: '', website: '', removalInstructions: '' });
+      // Call the addBroker function on the contract
+      const result = await addBroker({
+        args: [
+          formData.name,
+          formData.website,
+          formData.removalLink,
+          formData.contact,
+          parseInt(formData.weight)
+        ]
+      });
+
+      console.log('Broker submitted successfully:', result);
+      alert(`Data broker "${formData.name}" submitted successfully! 🎉`);
+      
+      // Reset form and refresh data
+      setFormData({ 
+        name: '', 
+        website: '', 
+        removalLink: '', 
+        contact: '', 
+        weight: '300' 
+      });
       setShowForm(false);
-    } catch (error) {
+      
+      // Refresh brokers list
+      setTimeout(fetchBrokers, 2000); // Give some time for the transaction to be mined
+      
+    } catch (error: any) {
       console.error('Error submitting broker:', error);
-      alert('Error submitting broker');
+      const errorMessage = error?.reason || error?.message || 'Unknown error occurred';
+      alert(`Error submitting broker: ${errorMessage}`);
     } finally {
       setSubmitting(false);
     }
@@ -150,15 +194,44 @@ const DataBrokers: React.FC = () => {
             </div>
 
             <div className="form-group">
-              <label className="form-label">Removal Instructions *</label>
-              <textarea
-                name="removalInstructions"
-                value={formData.removalInstructions}
+              <label className="form-label">Removal Link *</label>
+              <input
+                type="url"
+                name="removalLink"
+                value={formData.removalLink}
                 onChange={handleInputChange}
-                className="form-textarea"
-                placeholder="Detailed steps for data removal, including URLs, forms, or contact information"
+                className="form-input"
+                placeholder="https://example.com/optout"
                 required
               />
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">Contact Information *</label>
+              <input
+                type="text"
+                name="contact"
+                value={formData.contact}
+                onChange={handleInputChange}
+                className="form-input"
+                placeholder="privacy@example.com or phone number"
+                required
+              />
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">Impact Level *</label>
+              <select
+                name="weight"
+                value={formData.weight}
+                onChange={handleInputChange}
+                className="form-input"
+                required
+              >
+                <option value="100">Standard Impact (1x reward)</option>
+                <option value="200">Medium Impact (2x reward)</option>
+                <option value="300">High Impact (3x reward)</option>
+              </select>
             </div>
 
             <div className="flex gap-4">
@@ -183,20 +256,28 @@ const DataBrokers: React.FC = () => {
       )}
 
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <div className="card text-center">
-          <div className="text-2xl font-bold text-ninja-600">{brokers.length}</div>
+          <div className="text-2xl font-bold text-ninja-600">
+            {stats ? Number(stats[0]) : brokers.length}
+          </div>
           <div className="text-gray-600">Total Brokers</div>
         </div>
         <div className="card text-center">
           <div className="text-2xl font-bold text-green-600">
-            {brokers.filter(b => b.verified).length}
+            {stats ? Number(stats[1]) : brokers.filter(b => b.isActive).length}
           </div>
-          <div className="text-gray-600">Verified</div>
+          <div className="text-gray-600">Active</div>
+        </div>
+        <div className="card text-center">
+          <div className="text-2xl font-bold text-red-600">
+            {brokers.filter(b => b.weight >= 300).length}
+          </div>
+          <div className="text-gray-600">High Impact</div>
         </div>
         <div className="card text-center">
           <div className="text-2xl font-bold text-ninja-600">100</div>
-          <div className="text-gray-600">RN Reward per Submission</div>
+          <div className="text-gray-600">RN Reward Base</div>
         </div>
       </div>
 
@@ -208,14 +289,29 @@ const DataBrokers: React.FC = () => {
           <div className="flex justify-center py-8">
             <div className="loading"></div>
           </div>
+        ) : brokers.length === 0 ? (
+          <div className="card text-center">
+            <h3 className="text-lg font-semibold mb-2">No Data Brokers Found</h3>
+            <p className="text-gray-600 mb-4">
+              Be the first to submit a data broker and earn RN tokens!
+            </p>
+            {address && (
+              <button
+                onClick={() => setShowForm(true)}
+                className="btn"
+              >
+                Submit First Broker
+              </button>
+            )}
+          </div>
         ) : (
           <div className="space-y-4">
             {brokers.map((broker) => (
               <div
                 key={broker.id}
                 className={`card border-l-4 ${
-                  broker.verified ? 'border-l-green-500' : 'border-l-yellow-500'
-                }`}
+                  broker.isActive ? 'border-l-green-500' : 'border-l-gray-400'
+                } ${broker.weight >= 300 ? 'bg-red-50' : ''}`}
               >
                 <div className="flex justify-between items-start mb-4">
                   <div>
@@ -231,22 +327,39 @@ const DataBrokers: React.FC = () => {
                   </div>
                   <div className="flex gap-2">
                     <span className={`status-badge ${
-                      broker.verified ? 'status-verified' : 'status-pending'
+                      broker.isActive ? 'status-verified' : 'status-pending'
                     }`}>
-                      {broker.verified ? 'Verified' : 'Pending'}
+                      {broker.isActive ? 'Active' : 'Inactive'}
+                    </span>
+                    <span className={`status-badge ${WEIGHT_COLORS[broker.weight] || 'bg-gray-100 text-gray-800'}`}>
+                      {WEIGHT_LABELS[broker.weight] || `${broker.weight}x`}
                     </span>
                   </div>
                 </div>
 
-                <div className="mb-4">
-                  <h4 className="font-medium mb-2">Removal Instructions:</h4>
-                  <p className="text-gray-600">{broker.removalInstructions}</p>
+                <div className="mb-4 space-y-2">
+                  <div>
+                    <span className="font-medium">Removal Link: </span>
+                    <a
+                      href={broker.removalLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-ninja-600 hover:text-ninja-700"
+                    >
+                      {broker.removalLink}
+                    </a>
+                  </div>
+                  <div>
+                    <span className="font-medium">Contact: </span>
+                    <span className="text-gray-600">{broker.contact}</span>
+                  </div>
                 </div>
 
                 <div className="text-sm text-gray-500 border-t pt-3">
                   <div className="flex justify-between">
-                    <span>Submitted by: {formatAddress(broker.submittedBy)}</span>
-                    <span>Date: {broker.dateSubmitted}</span>
+                    <span>Removals: {broker.totalRemovals}</span>
+                    <span>Disputes: {broker.totalDisputes}</span>
+                    <span>Weight: {broker.weight / 100}x multiplier</span>
                   </div>
                 </div>
               </div>
