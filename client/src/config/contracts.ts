@@ -15,6 +15,10 @@ export const CONTRACTS = {
       address: "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
       abi: [], // Will be populated with contract ABI
     },
+    SIMPLE_DEX: {
+      address: "0x0000000000000000000000000000000000000000", // Not deployed on localhost yet
+      abi: [], // Will be populated with contract ABI
+    },
   },
     BASE_SEPOLIA: {
       REMOVAL_NINJA_TOKEN: {
@@ -27,6 +31,10 @@ export const CONTRACTS = {
       },
       TASK_FACTORY: {
         address: "0x6e7eF8A7B0219C0acE923dc9a0f76bBa65273Ef7", // Deployed Sept 23, 2025
+        abi: [],
+      },
+      SIMPLE_DEX: {
+        address: "0x8936a4c0257C302d05cddf4ECeA7cC347AC63ccd", // Deployed Sept 23, 2025
         abi: [],
       },
     },
@@ -75,6 +83,7 @@ export const CONTRACT_ADDRESSES = {
   REMOVAL_NINJA_TOKEN: getCurrentNetworkContracts().REMOVAL_NINJA_TOKEN.address,
   DATA_BROKER_REGISTRY: getCurrentNetworkContracts().DATA_BROKER_REGISTRY.address,
   TASK_FACTORY: getCurrentNetworkContracts().TASK_FACTORY.address,
+  SIMPLE_DEX: getCurrentNetworkContracts().SIMPLE_DEX.address,
 } as const;
 
 // Common contract constants
@@ -102,6 +111,7 @@ export const getContractAddress = (contractName: keyof typeof CONTRACT_ADDRESSES
 export const getTokenAddress = () => getContractAddress('REMOVAL_NINJA_TOKEN');
 export const getRegistryAddress = () => getContractAddress('DATA_BROKER_REGISTRY');
 export const getFactoryAddress = () => getContractAddress('TASK_FACTORY');
+export const getDexAddress = () => getContractAddress('SIMPLE_DEX');
 
 // Helper function to validate network
 export const isValidNetwork = (chainId: number): boolean => {

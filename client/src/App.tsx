@@ -8,6 +8,7 @@ import DataBrokers from './pages/DataBrokers';
 import Processors from './pages/Processors';
 import UserDashboard from './pages/UserDashboard';
 import ProcessorDashboard from './pages/ProcessorDashboard';
+import TokenPage from './pages/TokenPage';
 
 // Base Sepolia testnet configuration
 const ACTIVE_CHAIN = BaseSepoliaTestnet;
@@ -31,6 +32,7 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/brokers" element={<DataBrokers />} />
             <Route path="/processors" element={<Processors />} />
+            <Route path="/token" element={<TokenPage />} />
             <Route path="/dashboard" element={<UserDashboard />} />
             <Route path="/processor-dashboard" element={<ProcessorDashboard />} />
           </Routes>

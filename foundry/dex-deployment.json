@@ -1,0 +1,10 @@
+{
+  "network": "Base Sepolia",
+  "dex": "SimpleDEX",
+  "address": "0x8936a4c0257C302d05cddf4ECeA7cC347AC63ccd",
+  "initialLiquidity": {
+    "tokens": "500000",
+    "eth": "1"
+  },
+  "timestamp": 1758597950
+}

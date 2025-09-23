@@ -34,6 +34,12 @@ const Header: React.FC = () => {
           >
             Processors
           </Link>
+          <Link 
+            to="/token" 
+            className="text-gray-700 hover:text-ninja-600 font-medium transition-colors"
+          >
+            Token
+          </Link>
           {address && (
             <>
               <Link 
