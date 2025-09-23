@@ -1,0 +1,18 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+echo "🔍 Running pre-commit checks..."
+
+# Change to client directory and run lint:ci
+cd client
+npm run lint:ci
+
+# If linting fails, prevent commit
+if [ $? -ne 0 ]; then
+  echo ""
+  echo "❌ Pre-commit failed! Please fix ESLint errors before committing."
+  echo "💡 Run 'cd client && npm run lint:ci' to see detailed errors."
+  exit 1
+fi
+
+echo "✅ Pre-commit checks passed!"

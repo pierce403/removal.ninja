@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useAddress, useContract, useContractRead, useContractWrite } from '@thirdweb-dev/react';
-import { getFactoryAddress, getRegistryAddress, getTokenAddress } from '../config/contracts';
-import { Worker, RemovalTask, DataBroker, TaskStatus, RegisterWorkerForm, TASK_STATUS_LABELS, TASK_STATUS_COLORS } from '../types/contracts';
+import { getFactoryAddress, getTokenAddress } from '../config/contracts';
+import { RegisterWorkerForm } from '../types/contracts';
 
 // Contract ABIs
 const FACTORY_ABI = [
@@ -13,9 +13,6 @@ const FACTORY_ABI = [
   "function tasks(uint256) external view returns (address)"
 ];
 
-const REGISTRY_ABI = [
-  "function brokers(uint256) external view returns (uint256 id, string name, string website, string removalLink, string contact, uint256 weight, bool isActive, uint256 totalRemovals, uint256 totalDisputes)"
-];
 
 const TOKEN_ABI = [
   "function balanceOf(address) external view returns (uint256)",
@@ -28,7 +25,6 @@ const ProcessorDashboard: React.FC = () => {
   
   // Contract hooks
   const { contract: factoryContract } = useContract(getFactoryAddress(), FACTORY_ABI);
-  const { contract: registryContract } = useContract(getRegistryAddress(), REGISTRY_ABI);
   const { contract: tokenContract } = useContract(getTokenAddress(), TOKEN_ABI);
   
   const { data: workerInfo } = useContractRead(factoryContract, "workers", [address]);
@@ -43,18 +39,11 @@ const ProcessorDashboard: React.FC = () => {
   
   // Component state
   const [registering, setRegistering] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [availableTasks, setAvailableTasks] = useState<RemovalTask[]>([]);
-  const [assignedTasks, setAssignedTasks] = useState<RemovalTask[]>([]);
-  const [brokers, setBrokers] = useState<DataBroker[]>([]);
   const [formData, setFormData] = useState<RegisterWorkerForm>({
     stakeAmount: '100',
     description: ''
   });
 
-  const formatAddress = (address: string): string => {
-    return `${address.slice(0, 6)}...${address.slice(-4)}`;
-  };
 
   const formatTokenAmount = (amount: string | number): string => {
     const value = typeof amount === 'string' ? parseFloat(amount) : amount;

@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAddress, useContract, useContractRead, useContractWrite } from '@thirdweb-dev/react';
-import { getRegistryAddress, CONTRACT_CONSTANTS } from '../config/contracts';
-import { DataBroker, AddBrokerForm, RegistryStats, WEIGHT_LABELS, WEIGHT_COLORS } from '../types/contracts';
+import { getRegistryAddress } from '../config/contracts';
+import { DataBroker, AddBrokerForm, WEIGHT_LABELS, WEIGHT_COLORS } from '../types/contracts';
 
 // Simple ABI for DataBrokerRegistryUltraSimple contract
 const REGISTRY_ABI = [
@@ -34,7 +34,7 @@ const DataBrokers: React.FC = () => {
   });
 
   // Fetch brokers from contract
-  const fetchBrokers = async () => {
+  const fetchBrokers = useCallback(async () => {
     if (!contract || !nextBrokerId) return;
     
     setLoading(true);
@@ -69,12 +69,12 @@ const DataBrokers: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [contract, nextBrokerId]);
 
   // Load brokers on component mount and when contract data changes
   useEffect(() => {
     fetchBrokers();
-  }, [contract, nextBrokerId]);
+  }, [contract, nextBrokerId, fetchBrokers]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -134,9 +134,6 @@ const DataBrokers: React.FC = () => {
     }
   };
 
-  const formatAddress = (address: string): string => {
-    return `${address.slice(0, 6)}...${address.slice(-4)}`;
-  };
 
   return (
     <div className="space-y-8">

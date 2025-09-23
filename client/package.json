@@ -31,6 +31,7 @@
     "build:analyze": "craco build && npx webpack-bundle-analyzer build/static/js/*.js",
     "build:ci": "CI=true craco build",
     "lint": "eslint src --ext .ts,.tsx,.js,.jsx --max-warnings 0",
+    "lint:ci": "./scripts/lint-ci.sh",
     "type-check": "tsc --noEmit"
   },
   "eslintConfig": {

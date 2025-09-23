@@ -13,25 +13,26 @@ interface XmtpMessageSectionProps {
   selectedProcessors: string[];
 }
 
-type XmtpEnvironment = 'production' | 'dev' | 'local';
+// type XmtpEnvironment = 'production' | 'dev' | 'local';
 
-const DEFAULT_XMTP_ENV: XmtpEnvironment = 'production';
+// const DEFAULT_XMTP_ENV: XmtpEnvironment = 'production';
 
-const resolveXmtpEnv = (): XmtpEnvironment => {
-  const env = process.env.REACT_APP_XMTP_ENV?.toLowerCase();
-
-  switch (env) {
-    case 'production':
-    case 'dev':
-    case 'local':
-      return env;
-    case 'preview':
-    case 'beta':
-      return 'dev';
-    default:
-      return DEFAULT_XMTP_ENV;
-  }
-};
+// TODO: Re-enable when XMTP is installed
+// const resolveXmtpEnv = (): XmtpEnvironment => {
+//   const env = process.env.REACT_APP_XMTP_ENV?.toLowerCase();
+//
+//   switch (env) {
+//     case 'production':
+//     case 'dev':
+//     case 'local':
+//       return env;
+//     case 'preview':
+//     case 'beta':
+//       return 'dev';
+//     default:
+//       return DEFAULT_XMTP_ENV;
+//   }
+// };
 
 const formatAddress = (address: string | undefined | null) => {
   const trimmed = address?.trim() ?? '';
@@ -155,7 +156,7 @@ const XmtpMessageSection: React.FC<XmtpMessageSectionProps> = ({
 
     setInitializingClient(true);
     try {
-      const env = resolveXmtpEnv();
+      // const env = resolveXmtpEnv();
       // const client = await Client.create(signer, { env }); // TODO: Enable when XMTP is installed
       const client = null; // Placeholder
       setXmtpClient(client);

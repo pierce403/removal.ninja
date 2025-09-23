@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAddress, useContract, useContractRead, useContractWrite } from '@thirdweb-dev/react';
 import { getFactoryAddress, getRegistryAddress, getTokenAddress } from '../config/contracts';
-import { DataBroker, RemovalTask, TaskStatus, CreateTaskForm, TASK_STATUS_LABELS, TASK_STATUS_COLORS } from '../types/contracts';
+import { DataBroker, CreateTaskForm } from '../types/contracts';
 
 // Contract ABIs for the modular system
 const FACTORY_ABI = [
@@ -41,8 +41,6 @@ const UserDashboard: React.FC = () => {
   
   // Component state
   const [brokers, setBrokers] = useState<DataBroker[]>([]);
-  const [userTasks, setUserTasks] = useState<RemovalTask[]>([]);
-  const [loading, setLoading] = useState(false);
   const [creating, setCreating] = useState(false);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [createFormData, setCreateFormData] = useState<CreateTaskForm>({
@@ -53,7 +51,7 @@ const UserDashboard: React.FC = () => {
   });
 
   // Fetch brokers from registry
-  const fetchBrokers = async () => {
+  const fetchBrokers = useCallback(async () => {
     if (!registryContract || !nextBrokerId) return;
     
     try {
@@ -84,12 +82,12 @@ const UserDashboard: React.FC = () => {
     } catch (error) {
       console.error('Error fetching brokers:', error);
     }
-  };
+  }, [registryContract, nextBrokerId]);
 
   // Load data on component mount
   useEffect(() => {
     fetchBrokers();
-  }, [registryContract, nextBrokerId]);
+  }, [registryContract, nextBrokerId, fetchBrokers]);
 
   const formatAddress = (address: string): string => {
     return `${address.slice(0, 6)}...${address.slice(-4)}`;
@@ -228,13 +226,13 @@ const UserDashboard: React.FC = () => {
             <div className="flex justify-between">
               <span className="text-gray-600">Active Tasks:</span>
               <span className="font-semibold text-blue-600">
-                {userTasks.filter(t => t.currentStatus < TaskStatus.Verified).length}
+                {userTaskIds?.length || 0}
               </span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-600">Completed:</span>
               <span className="font-semibold text-green-600">
-                {userTasks.filter(t => t.currentStatus === TaskStatus.Verified).length}
+                0
               </span>
             </div>
           </div>
@@ -358,11 +356,7 @@ const UserDashboard: React.FC = () => {
       <div className="card">
         <h2 className="text-xl font-semibold mb-4">Your Removal Tasks</h2>
         
-        {loading ? (
-          <div className="flex justify-center py-8">
-            <div className="loading"></div>
-          </div>
-        ) : userTaskIds && userTaskIds.length > 0 ? (
+        {userTaskIds && userTaskIds.length > 0 ? (
           <div className="space-y-4">
             <p className="text-gray-600">
               You have {userTaskIds.length} task{userTaskIds.length !== 1 ? 's' : ''} created.
