@@ -16,20 +16,20 @@ export const CONTRACTS = {
       abi: [], // Will be populated with contract ABI
     },
   },
-  BASE_SEPOLIA: {
-    REMOVAL_NINJA_TOKEN: {
-      address: "0xC3760343D798f7A3DA9FCa33DBD725f7b3246760", // Deployed Sept 23, 2025
-      abi: [],
+    BASE_SEPOLIA: {
+      REMOVAL_NINJA_TOKEN: {
+        address: "0xA7b02F76D863b9467eCd80Eab3b9fd6aCe18200A", // Deployed Sept 23, 2025
+        abi: [],
+      },
+      DATA_BROKER_REGISTRY: {
+        address: "0xC3760343D798f7A3DA9FCa33DBD725f7b3246760", // Deployed Sept 23, 2025
+        abi: [],
+      },
+      TASK_FACTORY: {
+        address: "0x6e7eF8A7B0219C0acE923dc9a0f76bBa65273Ef7", // Deployed Sept 23, 2025
+        abi: [],
+      },
     },
-    DATA_BROKER_REGISTRY: {
-      address: "0xA7b02F76D863b9467eCd80Eab3b9fd6aCe18200A", // Deployed Sept 23, 2025
-      abi: [],
-    },
-    TASK_FACTORY: {
-      address: "0x6e7eF8A7B0219C0acE923dc9a0f76bBa65273Ef7", // Deployed Sept 23, 2025
-      abi: [],
-    },
-  },
 } as const;
 
 // Network configuration
