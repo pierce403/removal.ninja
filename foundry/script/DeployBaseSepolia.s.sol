@@ -11,12 +11,46 @@ import {RemovalTaskFactoryUltraSimple} from "../src/RemovalTaskFactoryUltraSimpl
  * @dev Deploy the complete RemovalNinja modular system to Base Sepolia
  */
 contract DeployBaseSepolia is Script {
+    
+    function _writeDeploymentInfo(
+        address deployer,
+        address tokenAddr,
+        address registryAddr,
+        address factoryAddr
+    ) internal {
+        // Create JSON in smaller parts to avoid stack too deep
+        string memory part1 = string(abi.encodePacked(
+            '{\n',
+            '  "network": "Base Sepolia",\n',
+            '  "chainId": 84532,\n',
+            '  "deployer": "', vm.toString(deployer), '",\n'
+        ));
+        
+        string memory part2 = string(abi.encodePacked(
+            '  "contracts": {\n',
+            '    "RemovalNinja": "', vm.toString(tokenAddr), '",\n',
+            '    "DataBrokerRegistry": "', vm.toString(registryAddr), '",\n',
+            '    "TaskFactory": "', vm.toString(factoryAddr), '"\n',
+            '  },\n'
+        ));
+        
+        string memory part3 = string(abi.encodePacked(
+            '  "blockNumber": ', vm.toString(block.number), ',\n',
+            '  "timestamp": ', vm.toString(block.timestamp), '\n',
+            '}'
+        ));
+        
+        string memory fullJson = string(abi.encodePacked(part1, part2, part3));
+        vm.writeFile("deployment-base-sepolia.json", fullJson);
+    }
+    
     function run() public returns (
         RemovalNinja token,
         DataBrokerRegistryUltraSimple registry,
         RemovalTaskFactoryUltraSimple factory
     ) {
-        uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
+        string memory privateKeyStr = vm.envString("PRIVATE_KEY");
+        uint256 deployerPrivateKey = vm.parseUint(string(abi.encodePacked("0x", privateKeyStr)));
         address deployer = vm.addr(deployerPrivateKey);
 
         console2.log("=== Base Sepolia Deployment ===");
@@ -109,29 +143,8 @@ contract DeployBaseSepolia is Script {
         console2.log("3. Test contract functions on BaseScan");
         console2.log("4. Add Base Sepolia to MetaMask if not already added");
 
-        // Save deployment info to JSON file
-        string memory deploymentInfo = string(abi.encodePacked(
-            '{\n',
-            '  "network": "Base Sepolia",\n',
-            '  "chainId": 84532,\n',
-            '  "deployer": "', vm.toString(deployer), '",\n',
-            '  "contracts": {\n',
-            '    "RemovalNinja": "', vm.toString(address(token)), '",\n',
-            '    "DataBrokerRegistry": "', vm.toString(address(registry)), '",\n',
-            '    "TaskFactory": "', vm.toString(address(factory)), '"\n',
-            '  },\n',
-            '  "blockNumber": ', vm.toString(block.number), ',\n',
-            '  "timestamp": ', vm.toString(block.timestamp), ',\n',
-            '  "gasUsed": "TBD",\n',
-            '  "verification": {\n',
-            '    "token": "forge verify-contract ', vm.toString(address(token)), ' src/RemovalNinja.sol:RemovalNinja --chain base-sepolia --etherscan-api-key $BASESCAN_API_KEY",\n',
-            '    "registry": "forge verify-contract ', vm.toString(address(registry)), ' src/DataBrokerRegistryUltraSimple.sol:DataBrokerRegistryUltraSimple --chain base-sepolia --etherscan-api-key $BASESCAN_API_KEY",\n',
-            '    "factory": "forge verify-contract ', vm.toString(address(factory)), ' src/RemovalTaskFactoryUltraSimple.sol:RemovalTaskFactoryUltraSimple --chain base-sepolia --etherscan-api-key $BASESCAN_API_KEY --constructor-args $(cast abi-encode \\"constructor(address,address)\\" ', vm.toString(address(token)), ' ', vm.toString(address(registry)), ')"\n',
-            '  }\n',
-            '}'
-        ));
-        
-        vm.writeFile("./deployment-base-sepolia.json", deploymentInfo);
+        // Save deployment info to JSON file (simplified to avoid stack too deep)
+        _writeDeploymentInfo(deployer, address(token), address(registry), address(factory));
         console2.log("Deployment info saved to: deployment-base-sepolia.json");
 
         return (token, registry, factory);

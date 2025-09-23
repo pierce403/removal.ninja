@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Client } from '@xmtp/xmtp-js';
+// import { Client } from '@xmtp/xmtp-js'; // TODO: Install @xmtp/xmtp-js dependency
 import { useAddress, useSigner } from '@thirdweb-dev/react';
 import { isAddress } from 'ethers/lib/utils';
 
@@ -82,7 +82,7 @@ const XmtpMessageSection: React.FC<XmtpMessageSectionProps> = ({
 }) => {
   const signer = useSigner();
   const address = useAddress();
-  const [xmtpClient, setXmtpClient] = useState<Client | null>(null);
+  const [xmtpClient, setXmtpClient] = useState<any | null>(null); // TODO: Replace 'any' with proper Client type when XMTP is installed
   const [initializingClient, setInitializingClient] = useState(false);
   const [recipientAddress, setRecipientAddress] = useState('');
   const [messageBody, setMessageBody] = useState('');
@@ -156,7 +156,8 @@ const XmtpMessageSection: React.FC<XmtpMessageSectionProps> = ({
     setInitializingClient(true);
     try {
       const env = resolveXmtpEnv();
-      const client = await Client.create(signer, { env });
+      // const client = await Client.create(signer, { env }); // TODO: Enable when XMTP is installed
+      const client = null; // Placeholder
       setXmtpClient(client);
       setStatusMessage({
         tone: 'success',

@@ -210,13 +210,7 @@ EOF
         cp "$env_example" "$env_file"
         
         echo -e "${GREEN}✅ Created $env_file from template${NC}"
-        echo -e "${YELLOW}⚠️  Please edit $env_file and configure your settings${NC}"
-        echo -e "${CYAN}📝 Required configurations:${NC}"
-        echo -e "   1. Set PRIVATE_KEY (generate with: cast wallet new)"
-        echo -e "   2. Set BASESCAN_API_KEY (get from: https://basescan.org/apis)"
-        echo -e "   3. Optionally set custom RPC URLs for better performance"
-        echo ""
-        exit 1
+        echo -e "${YELLOW}💡 Will auto-configure missing values...${NC}"
     fi
     
     # Source the environment file
@@ -225,10 +219,37 @@ EOF
     # Check network-specific variables
     case $network in
         "base-sepolia")
-            # Required variables for Base Sepolia
+            # Auto-generate private key if missing
             if [ -z "$PRIVATE_KEY" ] || [ "$PRIVATE_KEY" = "your_private_key_here" ]; then
-                missing_vars+=("PRIVATE_KEY")
-                has_errors=true
+                echo -e "${YELLOW}🔑 No private key found. Generating new wallet...${NC}"
+                
+                # Generate new wallet using cast
+                WALLET_OUTPUT=$(cast wallet new 2>/dev/null)
+                PRIVATE_KEY=$(echo "$WALLET_OUTPUT" | grep "Private key:" | cut -d' ' -f3)
+                WALLET_ADDRESS=$(echo "$WALLET_OUTPUT" | grep "Address:" | cut -d' ' -f2)
+                
+                if [ -n "$PRIVATE_KEY" ]; then
+                    # Remove 0x prefix
+                    PRIVATE_KEY=${PRIVATE_KEY#0x}
+                    
+                    # Update .env file
+                    if grep -q "PRIVATE_KEY=" "$env_file"; then
+                        sed -i "s/PRIVATE_KEY=.*/PRIVATE_KEY=$PRIVATE_KEY/" "$env_file"
+                    else
+                        echo "PRIVATE_KEY=$PRIVATE_KEY" >> "$env_file"
+                    fi
+                    
+                    echo -e "${GREEN}✅ New wallet generated and saved to .env${NC}"
+                    echo -e "${CYAN}📋 Wallet Address: ${GREEN}$WALLET_ADDRESS${NC}"
+                    echo -e "${YELLOW}⚠️  Please fund this wallet with test ETH for deployment${NC}"
+                    echo -e "${CYAN}🚿 Base Sepolia Faucet: https://faucet.quicknode.com/base/sepolia${NC}"
+                    
+                    # Update environment variable for this session
+                    export PRIVATE_KEY="$PRIVATE_KEY"
+                else
+                    missing_vars+=("PRIVATE_KEY")
+                    has_errors=true
+                fi
             fi
             
             if [ -z "$BASE_SEPOLIA_RPC_URL" ]; then
@@ -245,10 +266,37 @@ EOF
             fi
             ;;
         "base")
-            # Required variables for Base Mainnet
+            # Auto-generate private key if missing
             if [ -z "$PRIVATE_KEY" ] || [ "$PRIVATE_KEY" = "your_private_key_here" ]; then
-                missing_vars+=("PRIVATE_KEY")
-                has_errors=true
+                echo -e "${YELLOW}🔑 No private key found. Generating new wallet...${NC}"
+                
+                # Generate new wallet using cast
+                WALLET_OUTPUT=$(cast wallet new 2>/dev/null)
+                PRIVATE_KEY=$(echo "$WALLET_OUTPUT" | grep "Private key:" | cut -d' ' -f3)
+                WALLET_ADDRESS=$(echo "$WALLET_OUTPUT" | grep "Address:" | cut -d' ' -f2)
+                
+                if [ -n "$PRIVATE_KEY" ]; then
+                    # Remove 0x prefix
+                    PRIVATE_KEY=${PRIVATE_KEY#0x}
+                    
+                    # Update .env file
+                    if grep -q "PRIVATE_KEY=" "$env_file"; then
+                        sed -i "s/PRIVATE_KEY=.*/PRIVATE_KEY=$PRIVATE_KEY/" "$env_file"
+                    else
+                        echo "PRIVATE_KEY=$PRIVATE_KEY" >> "$env_file"
+                    fi
+                    
+                    echo -e "${GREEN}✅ New wallet generated and saved to .env${NC}"
+                    echo -e "${CYAN}📋 Wallet Address: ${GREEN}$WALLET_ADDRESS${NC}"
+                    echo -e "${RED}⚠️  WARNING: This is MAINNET! You need real ETH for deployment${NC}"
+                    echo -e "${YELLOW}💡 Consider using a testnet for development${NC}"
+                    
+                    # Update environment variable for this session
+                    export PRIVATE_KEY="$PRIVATE_KEY"
+                else
+                    missing_vars+=("PRIVATE_KEY")
+                    has_errors=true
+                fi
             fi
             
             if [ -z "$BASE_RPC_URL" ]; then
@@ -265,9 +313,37 @@ EOF
             fi
             ;;
         "sepolia")
+            # Auto-generate private key if missing
             if [ -z "$PRIVATE_KEY" ] || [ "$PRIVATE_KEY" = "your_private_key_here" ]; then
-                missing_vars+=("PRIVATE_KEY")
-                has_errors=true
+                echo -e "${YELLOW}🔑 No private key found. Generating new wallet...${NC}"
+                
+                # Generate new wallet using cast
+                WALLET_OUTPUT=$(cast wallet new 2>/dev/null)
+                PRIVATE_KEY=$(echo "$WALLET_OUTPUT" | grep "Private key:" | cut -d' ' -f3)
+                WALLET_ADDRESS=$(echo "$WALLET_OUTPUT" | grep "Address:" | cut -d' ' -f2)
+                
+                if [ -n "$PRIVATE_KEY" ]; then
+                    # Remove 0x prefix
+                    PRIVATE_KEY=${PRIVATE_KEY#0x}
+                    
+                    # Update .env file
+                    if grep -q "PRIVATE_KEY=" "$env_file"; then
+                        sed -i "s/PRIVATE_KEY=.*/PRIVATE_KEY=$PRIVATE_KEY/" "$env_file"
+                    else
+                        echo "PRIVATE_KEY=$PRIVATE_KEY" >> "$env_file"
+                    fi
+                    
+                    echo -e "${GREEN}✅ New wallet generated and saved to .env${NC}"
+                    echo -e "${CYAN}📋 Wallet Address: ${GREEN}$WALLET_ADDRESS${NC}"
+                    echo -e "${YELLOW}⚠️  Please fund this wallet with test ETH for deployment${NC}"
+                    echo -e "${CYAN}🚿 Sepolia Faucet: https://faucet.quicknode.com/ethereum/sepolia${NC}"
+                    
+                    # Update environment variable for this session
+                    export PRIVATE_KEY="$PRIVATE_KEY"
+                else
+                    missing_vars+=("PRIVATE_KEY")
+                    has_errors=true
+                fi
             fi
             
             if [ -z "$SEPOLIA_RPC_URL" ]; then
@@ -301,7 +377,8 @@ EOF
             case $var in
                 "PRIVATE_KEY")
                     echo -e "${RED}❌ PRIVATE_KEY${NC}"
-                    echo -e "${CYAN}   How to fix:${NC}"
+                    echo -e "${CYAN}   Issue: Failed to auto-generate private key${NC}"
+                    echo -e "${YELLOW}   Manual fix:${NC}"
                     echo -e "   1. Generate a new wallet: ${YELLOW}cast wallet new${NC}"
                     echo -e "   2. Copy the private key (without 0x prefix)"
                     echo -e "   3. Set PRIVATE_KEY=your_private_key in $env_file"

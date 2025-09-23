@@ -18,15 +18,15 @@ export const CONTRACTS = {
   },
   BASE_SEPOLIA: {
     REMOVAL_NINJA_TOKEN: {
-      address: "0x0000000000000000000000000000000000000000", // To be deployed
+      address: "0xC3760343D798f7A3DA9FCa33DBD725f7b3246760", // Deployed Sept 23, 2025
       abi: [],
     },
     DATA_BROKER_REGISTRY: {
-      address: "0x0000000000000000000000000000000000000000", // To be deployed
+      address: "0xA7b02F76D863b9467eCd80Eab3b9fd6aCe18200A", // Deployed Sept 23, 2025
       abi: [],
     },
     TASK_FACTORY: {
-      address: "0x0000000000000000000000000000000000000000", // To be deployed
+      address: "0x6e7eF8A7B0219C0acE923dc9a0f76bBa65273Ef7", // Deployed Sept 23, 2025
       abi: [],
     },
   },
@@ -58,12 +58,15 @@ export const SUPPORTED_NETWORKS = {
   },
 } as const;
 
-// Current active network (switch to LOCALHOST for development)
-export const ACTIVE_NETWORK = SUPPORTED_NETWORKS.LOCALHOST;
+// Current active network (switch to BASE_SEPOLIA for production testing)
+export const ACTIVE_NETWORK = SUPPORTED_NETWORKS.BASE_SEPOLIA;
 
 // Get contracts for current network
 const getCurrentNetworkContracts = () => {
-  const isLocalhost = ACTIVE_NETWORK.chainId === 31337;
+  // Use type assertion to handle compile-time chain ID comparison
+  const activeChainId = ACTIVE_NETWORK.chainId as number;
+  const localhostChainId = SUPPORTED_NETWORKS.LOCALHOST.chainId;
+  const isLocalhost = activeChainId === localhostChainId;
   return isLocalhost ? CONTRACTS.LOCALHOST : CONTRACTS.BASE_SEPOLIA;
 };
 
@@ -88,7 +91,7 @@ export const CONTRACT_CONSTANTS = {
 export const getContractAddress = (contractName: keyof typeof CONTRACT_ADDRESSES): string => {
   const address = CONTRACT_ADDRESSES[contractName];
   
-  if (address === "0x0000000000000000000000000000000000000000") {
+  if (address.toLowerCase() === "0x0000000000000000000000000000000000000000") {
     console.warn(`⚠️  ${contractName} address not configured. Please deploy and update config/contracts.ts`);
   }
   
@@ -134,4 +137,8 @@ export const addBaseSepoliaNetwork = () => addNetworkToWallet('BASE_SEPOLIA');
 export const addLocalhostNetwork = () => addNetworkToWallet('LOCALHOST');
 
 // Check if we're in development mode
-export const isDevelopment = () => ACTIVE_NETWORK.chainId === 31337;
+export const isDevelopment = () => {
+  const activeChainId = ACTIVE_NETWORK.chainId as number;
+  const localhostChainId = SUPPORTED_NETWORKS.LOCALHOST.chainId;
+  return activeChainId === localhostChainId;
+};
