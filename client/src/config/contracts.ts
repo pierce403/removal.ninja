@@ -1,5 +1,8 @@
 // Contract configuration for RemovalNinja modular protocol
 
+// Thirdweb configuration
+export const THIRDWEB_CLIENT_ID = "f527a70b19f540f6574f9071aab31da1";
+
 // Contract addresses for different networks
 export const CONTRACTS = {
   LOCALHOST: {
