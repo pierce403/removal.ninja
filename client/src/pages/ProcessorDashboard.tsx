@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useAddress, useContract, useContractRead, useContractWrite } from '@thirdweb-dev/react';
+import { useAddress, useContract, useContractRead, useContractWrite } from '../web3/thirdwebCompat';
 import { getFactoryAddress, getTokenAddress } from '../config/contracts';
 import { RegisterWorkerForm } from '../types/contracts';
 

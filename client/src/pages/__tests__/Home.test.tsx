@@ -1,20 +1,23 @@
 import React from 'react';
+import * as compat from '../../web3/thirdwebCompat';
 import { render, screen } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
-import { ThirdwebProvider } from '@thirdweb-dev/react';
+import { ThirdwebProvider } from 'thirdweb/react';
 import Home from '../Home';
 
 // Mock Thirdweb hooks
-jest.mock('@thirdweb-dev/react', () => ({
+vi.mock('thirdweb/react', () => ({
   __esModule: true,
   ThirdwebProvider: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  useAddress: jest.fn(),
+}));
+vi.mock('../../web3/thirdwebCompat', () => ({
+  useAddress: vi.fn(),
 }));
 
 const renderWithProviders = (component: React.ReactElement) => {
   return render(
     <BrowserRouter>
-      <ThirdwebProvider activeChain="localhost" clientId="test">
+      <ThirdwebProvider>
         {component}
       </ThirdwebProvider>
     </BrowserRouter>
@@ -23,11 +26,11 @@ const renderWithProviders = (component: React.ReactElement) => {
 
 describe('Home Page', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   test('renders hero section with title and description', () => {
-    const { useAddress } = require('@thirdweb-dev/react');
+    const { useAddress } = (compat as any);
     useAddress.mockReturnValue(null);
 
     renderWithProviders(<Home />);
@@ -37,7 +40,7 @@ describe('Home Page', () => {
   });
 
   test('displays protocol information sections', () => {
-    const { useAddress } = require('@thirdweb-dev/react');
+    const { useAddress } = (compat as any);
     useAddress.mockReturnValue(null);
 
     renderWithProviders(<Home />);
@@ -49,7 +52,7 @@ describe('Home Page', () => {
   });
 
   test('shows protocol architecture information', () => {
-    const { useAddress } = require('@thirdweb-dev/react');
+    const { useAddress } = (compat as any);
     useAddress.mockReturnValue(null);
 
     renderWithProviders(<Home />);
@@ -60,7 +63,7 @@ describe('Home Page', () => {
   });
 
   test('displays different CTA based on wallet connection', () => {
-    const { useAddress } = require('@thirdweb-dev/react');
+    const { useAddress } = (compat as any);
     
     // Test disconnected state
     useAddress.mockReturnValue(null);
@@ -71,7 +74,7 @@ describe('Home Page', () => {
     useAddress.mockReturnValue('0x1234567890123456789012345678901234567890');
     rerender(
       <BrowserRouter>
-        <ThirdwebProvider activeChain="localhost" clientId="test">
+        <ThirdwebProvider>
           <Home />
         </ThirdwebProvider>
       </BrowserRouter>
@@ -81,7 +84,7 @@ describe('Home Page', () => {
   });
 
   test('contains token reward information', () => {
-    const { useAddress } = require('@thirdweb-dev/react');
+    const { useAddress } = (compat as any);
     useAddress.mockReturnValue(null);
 
     renderWithProviders(<Home />);

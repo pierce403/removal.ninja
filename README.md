@@ -67,7 +67,7 @@ removal.ninja is a decentralized platform that creates a comprehensive data brok
 ## 🚀 Quick Start
 
 ### Prerequisites
-- Node.js 18+
+- Node.js 20.19+ or 22.13+
 - npm
 - MetaMask browser extension (for blockchain interaction)
 
@@ -84,8 +84,8 @@ npm run install:all
 
 ```bash
 # Start the React frontend (recommended for UI development)
-npm run client:dev
-# Access at http://localhost:3000
+npm run dev
+# Access at http://127.0.0.1:5173
 
 # Optional: Start local blockchain for full functionality
 cd contracts && npx hardhat node
@@ -96,11 +96,11 @@ cd contracts && npx hardhat run scripts/deploy.js --network localhost
 ### Testing
 
 ```bash
-# Run comprehensive test suite
+# Run Foundry contract tests
 npm test
 
-# Run with coverage
-cd client && npm test -- --coverage --watchAll=false
+# Run frontend component and wallet-adapter tests
+cd client && npm test
 
 # Security scanning
 npm run security:scan
@@ -122,8 +122,8 @@ npm run build
 │   │   ├── pages/         # Route-based page components
 │   │   ├── utils/         # Utility functions
 │   │   └── __tests__/     # Test suites
-│   ├── public/            # Static assets
-│   └── craco.config.js    # Webpack configuration for Web3 polyfills
+│   ├── index.html         # Vite entry point
+│   └── vite.config.ts     # Vite build and test configuration
 ├── contracts/             # Solidity smart contracts
 │   ├── contracts/         # Contract source files
 │   ├── scripts/          # Deployment scripts

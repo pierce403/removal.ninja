@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useAddress, useContract, useContractRead, useContractWrite } from '@thirdweb-dev/react';
+import { useAddress, useContract, useContractRead, useContractWrite } from '../web3/thirdwebCompat';
 import { getFactoryAddress, getRegistryAddress, getTokenAddress } from '../config/contracts';
 import { DataBroker, CreateTaskForm } from '../types/contracts';
 

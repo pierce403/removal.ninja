@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { useAddress, useDisconnect, ConnectWallet } from '@thirdweb-dev/react';
+import { useAddress, useDisconnect, ConnectWallet } from '../web3/thirdwebCompat';
 
 const Header: React.FC = () => {
   const address = useAddress();

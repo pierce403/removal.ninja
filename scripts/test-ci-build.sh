@@ -25,7 +25,7 @@ npm ci
 # Install client dependencies with exact CI flags
 echo "📦 Installing client dependencies..."
 cd client
-npm ci --legacy-peer-deps --no-optional --production=false
+npm ci
 
 # Type checking
 echo "🔍 Running TypeScript type check..."
@@ -34,11 +34,13 @@ npx tsc --noEmit || {
     exit 1
 }
 
+# Unit tests
+echo "🧪 Running unit tests..."
+npm test
+
 # Linting
 echo "🔍 Running ESLint..."
-npm run lint || {
-    echo "⚠️ Linting completed with warnings"
-}
+npm run lint
 
 # Security scan
 echo "🔒 Running security scan..."
@@ -59,8 +61,8 @@ if [ ! -f "build/index.html" ]; then
     exit 1
 fi
 
-if [ ! -d "build/static" ]; then
-    echo "❌ Build failed - static directory not found"
+if [ ! -d "build/assets" ]; then
+    echo "❌ Build failed - Vite assets directory not found"
     exit 1
 fi
 

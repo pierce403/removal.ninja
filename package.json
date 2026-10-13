@@ -9,7 +9,7 @@
     "test": "cd foundry && forge test",
     "test:coverage": "cd foundry && forge coverage",
     "test:gas": "cd foundry && forge test --gas-report",
-    "install:all": "npm install && cd client && npm install --legacy-peer-deps && cd ../foundry && forge install",
+    "install:all": "npm install && cd client && npm install && cd ../foundry && forge install",
     "compile": "cd foundry && forge build",
     "deploy": "./deploy_contracts.sh",
     "deploy:base-sepolia": "./deploy_contracts.sh base-sepolia --verify",

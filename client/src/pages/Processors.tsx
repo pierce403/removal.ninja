@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { useAddress } from '@thirdweb-dev/react';
+import { useAddress } from '../web3/thirdwebCompat';
 
 const Processors: React.FC = () => {
   const address = useAddress();

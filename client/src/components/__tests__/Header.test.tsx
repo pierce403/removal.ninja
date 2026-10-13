@@ -1,23 +1,25 @@
 import React from 'react';
+import * as compat from '../../web3/thirdwebCompat';
 import { render, screen } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
-import { ThirdwebProvider } from '@thirdweb-dev/react';
+import { ThirdwebProvider } from 'thirdweb/react';
 import Header from '../Header';
 
 // Mock Thirdweb hooks
-jest.mock('@thirdweb-dev/react', () => ({
+vi.mock('thirdweb/react', () => ({
   __esModule: true,
   ThirdwebProvider: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  useAddress: jest.fn(),
-  useDisconnect: jest.fn(),
-  useConnectionStatus: jest.fn(),
-  ConnectWallet: jest.fn(() => <button>Connect Wallet</button>),
+}));
+vi.mock('../../web3/thirdwebCompat', () => ({
+  useAddress: vi.fn(),
+  useDisconnect: vi.fn(),
+  ConnectWallet: vi.fn(() => <button>Connect Wallet</button>),
 }));
 
 const renderWithProviders = (component: React.ReactElement) => {
   return render(
     <BrowserRouter>
-      <ThirdwebProvider activeChain="localhost" clientId="test">
+      <ThirdwebProvider>
         {component}
       </ThirdwebProvider>
     </BrowserRouter>
@@ -26,13 +28,12 @@ const renderWithProviders = (component: React.ReactElement) => {
 
 describe('Header Component', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   test('renders removal.ninja logo and navigation', () => {
-    const { useAddress, useConnectionStatus } = require('@thirdweb-dev/react');
+    const { useAddress } = (compat as any);
     useAddress.mockReturnValue(null);
-    useConnectionStatus.mockReturnValue('disconnected');
 
     renderWithProviders(<Header />);
     
@@ -42,9 +43,8 @@ describe('Header Component', () => {
   });
 
   test('shows additional navigation when wallet is connected', () => {
-    const { useAddress, useConnectionStatus } = require('@thirdweb-dev/react');
+    const { useAddress } = (compat as any);
     useAddress.mockReturnValue('0x1234567890123456789012345678901234567890');
-    useConnectionStatus.mockReturnValue('connected');
 
     renderWithProviders(<Header />);
     
@@ -53,10 +53,9 @@ describe('Header Component', () => {
   });
 
   test('displays formatted address when connected', () => {
-    const { useAddress, useConnectionStatus } = require('@thirdweb-dev/react');
+    const { useAddress } = (compat as any);
     const mockAddress = '0x1234567890123456789012345678901234567890';
     useAddress.mockReturnValue(mockAddress);
-    useConnectionStatus.mockReturnValue('connected');
 
     renderWithProviders(<Header />);
     
@@ -64,9 +63,8 @@ describe('Header Component', () => {
   });
 
   test('shows connect wallet button when disconnected', () => {
-    const { useAddress, useConnectionStatus, ConnectWallet } = require('@thirdweb-dev/react');
+    const { useAddress, ConnectWallet } = (compat as any);
     useAddress.mockReturnValue(null);
-    useConnectionStatus.mockReturnValue('disconnected');
 
     renderWithProviders(<Header />);
 

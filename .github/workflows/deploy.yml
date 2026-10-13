@@ -17,13 +17,13 @@ jobs:
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: '18'
+        node-version: '22'
         cache: 'npm'
         
     - name: Install dependencies
       run: |
-        npm install
-        cd client && npm install --legacy-peer-deps
+        npm ci
+        cd client && npm ci
         
     - name: Run Security Scan
       run: |
@@ -32,12 +32,12 @@ jobs:
         
     - name: Run Tests
       run: |
-        cd client && npm test -- --watchAll=false --coverage || echo "Tests completed"
-      continue-on-error: true
+        cd client && npm test
         
     - name: Build React app
       run: |
         cd client && npm run build
+        node ../scripts/check-build.cjs build
         
     - name: Setup Pages
       uses: actions/configure-pages@v4
@@ -75,14 +75,14 @@ jobs:
           INDEX_FILE="build/index.html"
           if [ -f "$INDEX_FILE" ]; then
             # Check for correct asset paths
-            if grep -q '="/static/' "$INDEX_FILE"; then
-              echo "✅ Assets using root paths: /static/"
-            elif grep -q '="./static/' "$INDEX_FILE"; then
-              echo "✅ Assets using relative paths: ./static/"
+            if grep -q '="/assets/' "$INDEX_FILE"; then
+              echo "✅ Assets using root paths: /assets/"
+            elif grep -q '="./assets/' "$INDEX_FILE"; then
+              echo "✅ Assets using relative paths: ./assets/"
             else
               echo "⚠️ Unusual asset paths detected"
-              grep -o 'src="[^"]*static[^"]*"' "$INDEX_FILE" | head -3
-              grep -o 'href="[^"]*static[^"]*"' "$INDEX_FILE" | head -3
+              grep -o 'src="[^"]*assets[^"]*"' "$INDEX_FILE" | head -3
+              grep -o 'href="[^"]*assets[^"]*"' "$INDEX_FILE" | head -3
             fi
           fi
         fi

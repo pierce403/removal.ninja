@@ -4,41 +4,28 @@
   "private": true,
   "homepage": "https://removal.ninja",
   "dependencies": {
-    "@testing-library/jest-dom": "^5.17.0",
+    "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^14.5.0",
-    "@thirdweb-dev/react": "^4.9.4",
-    "@thirdweb-dev/sdk": "^4.0.99",
-    "@xmtp/xmtp-js": "^11.1.5",
-    "@types/jest": "^27.5.2",
-    "@types/node": "^16.18.0",
+    "@types/node": "^22.0.0",
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",
     "ajv": "^8.17.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.15.0",
-    "react-scripts": "5.0.1",
-    "typescript": "^4.9.5",
-    "web-vitals": "^2.1.4",
-    "ethers": "^5.7.2"
+    "thirdweb": "^5.122.0",
+    "typescript": "^5.9.3",
+    "web-vitals": "^2.1.4"
   },
   "scripts": {
-    "start": "craco start",
-    "build": "craco build",
-    "test": "craco test",
-    "eject": "react-scripts eject",
-    "build:analyze": "craco build && npx webpack-bundle-analyzer build/static/js/*.js",
-    "build:ci": "CI=true craco build",
+    "start": "vite --host 127.0.0.1",
+    "build": "tsc --noEmit && vite build",
+    "test": "vitest run",
+    "build:ci": "tsc --noEmit && vite build",
     "lint": "eslint src --ext .ts,.tsx,.js,.jsx --max-warnings 0",
     "lint:ci": "./scripts/lint-ci.sh",
     "type-check": "tsc --noEmit"
-  },
-  "eslintConfig": {
-    "extends": [
-      "react-app",
-      "react-app/jest"
-    ]
   },
   "browserslist": {
     "production": [
@@ -53,16 +40,26 @@
     ]
   },
   "devDependencies": {
-    "@craco/craco": "^7.1.0",
+    "@eslint/js": "^10.0.1",
+    "@typescript-eslint/parser": "^8.71.2",
+    "@vitejs/plugin-react": "^5.2.0",
     "assert": "^2.1.0",
     "autoprefixer": "^10.4.16",
     "buffer": "^6.0.3",
     "crypto-browserify": "^3.12.1",
+    "eslint": "^10.12.0",
+    "jsdom": "^26.1.0",
     "postcss": "^8.4.31",
     "process": "^0.11.10",
     "stream-browserify": "^3.0.0",
     "tailwindcss": "^3.3.5",
     "url": "^0.11.4",
-    "util": "^0.12.5"
+    "util": "^0.12.5",
+    "vite": "^7.3.7",
+    "vitest": "^4.1.11"
+  },
+  "overrides": {
+    "ws@^8": "8.22.0",
+    "js-yaml": "4.3.2"
   }
 }
