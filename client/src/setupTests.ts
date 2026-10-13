@@ -1,9 +1,10 @@
 // jest-dom adds custom jest matchers for asserting on DOM nodes.
-import '@testing-library/jest-dom';
+import '@testing-library/jest-dom/vitest';
+import { TextDecoder as NodeTextDecoder, TextEncoder as NodeTextEncoder } from 'node:util';
 
 // Polyfills for Node.js environment
-global.TextDecoder = require('util').TextDecoder;
-global.TextEncoder = require('util').TextEncoder;
+global.TextDecoder = NodeTextDecoder as typeof global.TextDecoder;
+global.TextEncoder = NodeTextEncoder as typeof global.TextEncoder;
 
 // Mock crypto for Web3 libraries
 Object.defineProperty(global, 'crypto', {
@@ -21,23 +22,27 @@ Object.defineProperty(global, 'crypto', {
 // Mock window.matchMedia for responsive components
 Object.defineProperty(window, 'matchMedia', {
   writable: true,
-  value: jest.fn().mockImplementation(query => ({
+  value: vi.fn().mockImplementation(query => ({
     matches: false,
     media: query,
     onchange: null,
-    addListener: jest.fn(), // deprecated
-    removeListener: jest.fn(), // deprecated
-    addEventListener: jest.fn(),
-    removeEventListener: jest.fn(),
-    dispatchEvent: jest.fn(),
+    addListener: vi.fn(), // deprecated
+    removeListener: vi.fn(), // deprecated
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    dispatchEvent: vi.fn(),
   })),
 });
 
 // Mock IntersectionObserver
 global.IntersectionObserver = class IntersectionObserver {
+  readonly root = null;
+  readonly rootMargin = '0px';
+  readonly thresholds = [];
   disconnect() {}
   observe() {}
   unobserve() {}
+  takeRecords() { return []; }
 };
 
 // Suppress console warnings in tests

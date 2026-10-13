@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useAddress, useContract, useContractRead, useContractWrite } from '@thirdweb-dev/react';
+import { useAddress, useContract, useContractRead, useContractWrite } from '../web3/thirdwebCompat';
 import { getRegistryAddress } from '../config/contracts';
 import { DataBroker, AddBrokerForm, WEIGHT_LABELS, WEIGHT_COLORS } from '../types/contracts';
 

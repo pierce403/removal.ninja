@@ -12,7 +12,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        node-version: [18, 20]
+        node-version: [20, 22]
     
     name: Test Build on ${{ matrix.os }} with Node ${{ matrix.node-version }}
     
@@ -29,17 +29,17 @@ jobs:
     - name: Clean Install Dependencies
       run: |
         npm ci
-        cd client && npm ci --legacy-peer-deps
-        
+        cd client && npm ci
+
     - name: Lint Check
-      run: |
-        cd client && npm run lint || echo "Lint completed with warnings"
-      continue-on-error: true
+      run: cd client && npm run lint
         
     - name: Type Check
       run: |
         cd client && npx tsc --noEmit
-      continue-on-error: true
+
+    - name: Unit Tests
+      run: cd client && npm test
         
     - name: Test Build (Production)
       run: |
@@ -48,9 +48,9 @@ jobs:
     - name: Verify Build Assets and Size
       run: node scripts/check-build.cjs client/build
         
-  test-webpack-config:
+  test-vite-dev-server:
     runs-on: ubuntu-latest
-    name: Test Webpack Configuration
+    name: Test Vite Development Server
     
     steps:
     - name: Checkout
@@ -59,22 +59,25 @@ jobs:
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: '18'
+        node-version: '22'
         cache: 'npm'
         
     - name: Install Dependencies
       run: |
         npm ci
-        cd client && npm ci --legacy-peer-deps
-        
-    - name: Test Webpack Config
-      run: |
-        cd client
-        npx craco build --analyze || echo "Build analysis completed"
+        cd client && npm ci
         
     - name: Test Development Build
       run: |
         cd client
-        timeout 60 npm start &
-        sleep 30
-        curl -f http://localhost:3000 || echo "Dev server check completed"
+        npm start > /tmp/removal-vite-dev.log 2>&1 &
+        server_pid=$!
+        trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+        for attempt in $(seq 1 30); do
+          if curl -fsS http://127.0.0.1:5173 | grep -q '/src/index.tsx'; then
+            exit 0
+          fi
+          sleep 1
+        done
+        cat /tmp/removal-vite-dev.log
+        exit 1

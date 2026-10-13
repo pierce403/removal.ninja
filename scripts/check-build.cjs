@@ -3,13 +3,13 @@ const path = require('node:path');
 
 const buildDir = path.resolve(process.argv[2] || 'client/build');
 const index = path.join(buildDir, 'index.html');
-const staticDir = path.join(buildDir, 'static');
+const staticDir = path.join(buildDir, 'assets');
 
 if (!fs.existsSync(index) || !fs.statSync(index).isFile()) {
   throw new Error(`Missing build index: ${index}`);
 }
 if (!fs.existsSync(staticDir) || !fs.statSync(staticDir).isDirectory()) {
-  throw new Error(`Missing static assets: ${staticDir}`);
+  throw new Error(`Missing Vite assets: ${staticDir}`);
 }
 
 function sizeOf(entry) {

@@ -3,19 +3,19 @@ import { render, screen } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import App from '../App';
 
-// Mock Thirdweb provider to avoid polyfill issues in tests
-jest.mock('@thirdweb-dev/react', () => ({
+// Mock the v5 provider and wallet adapter without creating network clients.
+vi.mock('thirdweb/react', () => ({
   ThirdwebProvider: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="thirdweb-provider">{children}</div>
   ),
-  metamaskWallet: jest.fn(),
-  coinbaseWallet: jest.fn(),
-  rainbowWallet: jest.fn(),
-  walletConnect: jest.fn(),
-  useAddress: jest.fn(() => null),
-  useDisconnect: jest.fn(),
-  useConnectionStatus: jest.fn(() => 'disconnected'),
-  ConnectWallet: jest.fn(() => <button>Connect Wallet</button>),
+}));
+vi.mock('../web3/thirdwebCompat', () => ({
+  useAddress: vi.fn(() => null),
+  useDisconnect: vi.fn(),
+  ConnectWallet: vi.fn(() => <button>Connect Wallet</button>),
+  useContract: vi.fn(() => ({ contract: { call: vi.fn() } })),
+  useContractRead: vi.fn(() => ({ data: undefined })),
+  useContractWrite: vi.fn(() => ({ mutateAsync: vi.fn() })),
 }));
 
 describe('App Component', () => {

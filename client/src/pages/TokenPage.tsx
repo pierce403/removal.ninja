@@ -4,7 +4,7 @@ import {
   useContract, 
   useContractRead, 
   useContractWrite 
-} from '@thirdweb-dev/react';
+} from '../web3/thirdwebCompat';
 import { getTokenAddress, getDexAddress } from '../config/contracts';
 
 // Simple ABI for the token contract
