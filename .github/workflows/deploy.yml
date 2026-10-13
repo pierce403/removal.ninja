@@ -37,7 +37,7 @@ jobs:
     - name: Build React app
       run: |
         cd client && npm run build
-        node scripts/check-build.cjs client/build
+        node ../scripts/check-build.cjs build
         
     - name: Setup Pages
       uses: actions/configure-pages@v4
