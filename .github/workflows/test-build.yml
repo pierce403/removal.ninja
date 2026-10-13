@@ -45,17 +45,8 @@ jobs:
       run: |
         cd client && npm run build
         
-    - name: Test Build Size
-      run: |
-        cd client/build
-        du -sh * | sort -hr
-        
-    - name: Verify Build Assets
-      run: |
-        cd client/build
-        ls -la
-        test -f index.html || exit 1
-        test -d static || exit 1
+    - name: Verify Build Assets and Size
+      run: node scripts/check-build.cjs client/build
         
   test-webpack-config:
     runs-on: ubuntu-latest
