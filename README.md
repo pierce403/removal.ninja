@@ -305,3 +305,9 @@ Always review smart contracts before interacting with them on mainnet.
 ---
 
 Built with ❤️ for privacy and decentralization
+## Licensing scope
+
+Original code and documentation authored for this project by Dean Pierce are licensed under the [Apache License 2.0](LICENSE).
+Third-party dependencies, assets, and quoted material retain their respective licenses and notices. This grant does not relicense third-party work.
+
+Vendored dependencies, including `foundry/lib/forge-std`, retain their own licenses and notices.
