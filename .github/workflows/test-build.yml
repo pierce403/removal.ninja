@@ -46,11 +46,13 @@ jobs:
         cd client && npm run build
         
     - name: Test Build Size
+      shell: bash
       run: |
         cd client/build
         du -sh * | sort -hr
         
     - name: Verify Build Assets
+      shell: bash
       run: |
         cd client/build
         ls -la

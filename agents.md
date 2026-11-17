@@ -297,3 +297,8 @@ But the site is deployed to a custom domain root, causing double-path issues:
 
 *Last Updated: Current Session*  
 *Next Review: After resolution verification*
+
+## Cross-platform build verification
+
+- The build-size and asset-existence steps in `test-build.yml` use Unix commands; explicitly run them with `shell: bash` on every matrix OS. Windows defaults to PowerShell, where `sort -hr` invokes `Sort-Object` and fails after an otherwise successful production build.
+- Linux production-build verification passed with `NODE_OPTIONS=--max-old-space-size=2048 GENERATE_SOURCEMAP=false CI=true npm run build` when the unconstrained build exited early. This does not prove Windows/macOS results; verify the matrix run separately.
